@@ -23,6 +23,7 @@ cfgLoader.load([
   '../config/players.yml',
   '../config/textures.yml',
   '../config/town.yml',
+  '../config/gamepads.yml',
   settingsFile,
 ])
   .catch((err) => {

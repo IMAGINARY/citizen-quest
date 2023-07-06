@@ -1,0 +1,28 @@
+players:
+  # <id>: // A unique id (integer) for the player
+  #   gamepadMapping: // The mapping of the gamepad
+  #     axes: // The mapping of the axes (negative index means the axis is inverted; -0 does not work, use -0.0 instead)
+  #       up: <integer> // The id of the up axis
+  #       down: <integer> // The id of the down axis
+  #       left: <integer> // The id of the left axis
+  #       right: <integer> // The id of the right axis
+  #       action: <integer> // The id of the axis to use for the action button
+  #       lang: <integer> // The id of the axis to use for the lang button
+  #     buttons: // The mapping of the buttons
+  #       up: <integer> // The id of the up button
+  #       down: <integer> // The id of the down button
+  #       left: <integer> // The id of the left button
+  #       right: <integer> // The id of the right button
+  #       action: <integer> // The id of the action button
+  #       lang: <integer> // The id of the lang button
+  1:
+    gamepadMapping:
+      axes:
+        up: -1
+        down: 1
+        left: -0.0
+        right: 0
+
+      buttons:
+        action: 1
+        lang: 9

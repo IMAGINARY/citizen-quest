@@ -1,3 +1,5 @@
+const deepmerge = require('deepmerge');
+
 const InputMgr = require('./input-mgr');
 
 /**
@@ -5,12 +7,11 @@ const InputMgr = require('./input-mgr');
  */
 
 /**
- * Static gamepad configuration.
- * TODO: Make this configurable via the game config.
+ * Gamepad configuration for standard gamepads.
  *
  * @type {GamepadMapperConfig}
  */
-const staticMapperConfig = {
+const standardMapperConfig = {
   axes: {
     up: -1,
     down: 1,
@@ -18,6 +19,10 @@ const staticMapperConfig = {
     right: 0,
   },
   buttons: {
+    up: 12,
+    down: 13,
+    left: 14,
+    right: 15,
     action: 1,
     lang: 9,
   },
@@ -29,9 +34,18 @@ const staticMapperConfig = {
  * @augments InputMgr
  */
 class GamepadInputMgr extends InputMgr {
-  constructor() {
+  /**
+   * @param {GamepadMapperConfig} [mapperConfig]
+   */
+  constructor(mapperConfig = {}) {
     super();
-    this.mapper = new GamepadMapper(staticMapperConfig);
+    console.log(
+      mapperConfig,
+      deepmerge(standardMapperConfig, mapperConfig ?? {}),
+    );
+    this.mapper = new GamepadMapper(
+      deepmerge(standardMapperConfig, mapperConfig ?? {}),
+    );
     this.gamepadIndex = -1;
     this.handleGamepadDisConnected = () => {
       const gamepad = navigator.getGamepads().find((g) => g !== null);

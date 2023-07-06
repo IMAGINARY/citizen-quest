@@ -14,6 +14,7 @@ cfgLoader.load([
   'config/players.yml',
   'config/textures.yml',
   'config/town.yml',
+  'config/gamepads.yml',
 ]).catch((err) => {
   showFatalError('Error loading configuration', err);
   console.error('Error loading configuration');

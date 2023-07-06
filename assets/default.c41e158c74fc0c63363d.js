@@ -14066,7 +14066,9 @@ class PlayerApp {
     this.keyboardInputMgr.attachListeners();
     this.keyboardInputMgr.addToggle('KeyD', () => { this.stats.togglePanel(); });
 
-    this.gamepadInputMgr = new GamepadInputMgr();
+    const gamepadMapperConfig =
+      this.config?.players?.[this.playerId]?.['gamepadMapping'] ?? {};
+    this.gamepadInputMgr = new GamepadInputMgr(gamepadMapperConfig);
     this.gamepadInputMgr.attachListeners();
 
     this.multiplexInputMgr = new MultiplexInputMgr(
@@ -15427,6 +15429,8 @@ module.exports = clone;
   \***********************************************/
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
+const deepmerge = __webpack_require__(/*! deepmerge */ "./node_modules/deepmerge/dist/cjs.js");
+
 const InputMgr = __webpack_require__(/*! ./input-mgr */ "./src/js/lib/input/input-mgr.js");
 
 /**
@@ -15434,12 +15438,11 @@ const InputMgr = __webpack_require__(/*! ./input-mgr */ "./src/js/lib/input/inpu
  */
 
 /**
- * Static gamepad configuration.
- * TODO: Make this configurable via the game config.
+ * Gamepad configuration for standard gamepads.
  *
  * @type {GamepadMapperConfig}
  */
-const staticMapperConfig = {
+const standardMapperConfig = {
   axes: {
     up: -1,
     down: 1,
@@ -15447,6 +15450,10 @@ const staticMapperConfig = {
     right: 0,
   },
   buttons: {
+    up: 12,
+    down: 13,
+    left: 14,
+    right: 15,
     action: 1,
     lang: 9,
   },
@@ -15458,9 +15465,18 @@ const staticMapperConfig = {
  * @augments InputMgr
  */
 class GamepadInputMgr extends InputMgr {
-  constructor() {
+  /**
+   * @param {GamepadMapperConfig} [mapperConfig]
+   */
+  constructor(mapperConfig = {}) {
     super();
-    this.mapper = new GamepadMapper(staticMapperConfig);
+    console.log(
+      mapperConfig,
+      deepmerge(standardMapperConfig, mapperConfig ?? {}),
+    );
+    this.mapper = new GamepadMapper(
+      deepmerge(standardMapperConfig, mapperConfig ?? {}),
+    );
     this.gamepadIndex = -1;
     this.handleGamepadDisConnected = () => {
       const gamepad = navigator.getGamepads().find((g) => g !== null);
@@ -16573,6 +16589,7 @@ cfgLoader.load([
   'config/players.yml',
   'config/textures.yml',
   'config/town.yml',
+  'config/gamepads.yml',
 ]).catch((err) => {
   showFatalError('Error loading configuration', err);
   console.error('Error loading configuration');
@@ -16603,4 +16620,4 @@ cfgLoader.load([
 
 /******/ })()
 ;
-//# sourceMappingURL=default.573a6a65d245ff2c1b2c.js.map
+//# sourceMappingURL=default.c41e158c74fc0c63363d.js.map

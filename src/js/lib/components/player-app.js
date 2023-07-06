@@ -65,7 +65,9 @@ class PlayerApp {
     this.keyboardInputMgr.attachListeners();
     this.keyboardInputMgr.addToggle('KeyD', () => { this.stats.togglePanel(); });
 
-    this.gamepadInputMgr = new GamepadInputMgr();
+    const gamepadMapperConfig =
+      this.config?.players?.[this.playerId]?.['gamepadMapping'] ?? {};
+    this.gamepadInputMgr = new GamepadInputMgr(gamepadMapperConfig);
     this.gamepadInputMgr.attachListeners();
 
     this.multiplexInputMgr = new MultiplexInputMgr(
