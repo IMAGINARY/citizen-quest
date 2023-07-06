@@ -1,27 +1,44 @@
-const EventEmitter = require('events');
+const InputMgr = require('./input-mgr');
 
-class KeyboardInputMgr {
+const codeToEventName = {
+  ArrowLeft: 'left',
+  ArrowUp: 'up',
+  ArrowRight: 'right',
+  ArrowDown: 'down',
+  Space: 'action',
+  KeyL: 'lang',
+};
+
+/**
+ * Handles keyboard input.
+ *
+ * @augments InputMgr
+ */
+class KeyboardInputMgr extends InputMgr {
   constructor() {
-    this.events = new EventEmitter();
+    super();
     this.handleKeyDown = this.handleKeyDown.bind(this);
     this.handleKeyUp = this.handleKeyUp.bind(this);
-    this.pressed = {
-      up: false,
-      down: false,
-      left: false,
-      right: false,
-    };
+    /**
+     * The internal state is used to track keydown events and is pushed to the superclass state as a whole via
+     * {@link updateState()}.
+     */
+    this.internalState = { ...this.state };
     this.toggles = {};
   }
 
-  addListeners() {
+  attachListeners() {
+    if (this.isListening()) return;
+    super.attachListeners();
     $(document).on('keydown', this.handleKeyDown);
     $(document).on('keyup', this.handleKeyUp);
   }
 
-  removeListeners() {
+  detachListeners() {
+    if (!this.isListening()) return;
     $(document).off('keydown', this.handleKeyDown);
     $(document).off('keyup', this.handleKeyUp);
+    super.detachListeners();
   }
 
   handleKeyDown(event) {
@@ -29,52 +46,32 @@ class KeyboardInputMgr {
     if (event.originalEvent.repeat) {
       return;
     }
-    // Read the arrow keys and the spacebar
-    if (event.code === 'ArrowLeft') {
-      this.pressed.left = true;
-      this.events.emit('left');
-    } else if (event.code === 'ArrowUp') {
-      this.pressed.up = true;
-      this.events.emit('up');
-    } else if (event.code === 'ArrowRight') {
-      this.pressed.right = true;
-      this.events.emit('right');
-    } else if (event.code === 'ArrowDown') {
-      this.pressed.down = true;
-      this.events.emit('down');
-    } else if (event.code === 'Space') {
-      this.pressed.space = true;
-      this.events.emit('action');
-    } else if (this.toggles[event.code]) {
+
+    // Process keys that have an event name assigned
+    if (typeof codeToEventName[event.code] !== 'undefined') {
+      const eventName = codeToEventName[event.code];
+      this.internalState[eventName] = true;
+    }
+
+    // Process toggles separately
+    if (this.toggles[event.code]) {
       this.toggles[event.code]();
     }
   }
 
   handleKeyUp(event) {
-    // Read the arrow keys
-    if (event.code === 'ArrowLeft') {
-      this.pressed.left = false;
-    } else if (event.code === 'ArrowUp') {
-      this.pressed.up = false;
-    } else if (event.code === 'ArrowRight') {
-      this.pressed.right = false;
-    } else if (event.code === 'ArrowDown') {
-      this.pressed.down = false;
-    } else if (event.code === 'Space') {
-      this.pressed.space = false;
+    if (typeof codeToEventName[event.code] !== 'undefined') {
+      const eventName = codeToEventName[event.code];
+      this.internalState[eventName] = false;
     }
-  }
-
-  getDirection() {
-    return {
-      x: (this.pressed.right ? 1 : 0) - (this.pressed.left ? 1 : 0),
-      y: (this.pressed.down ? 1 : 0) - (this.pressed.up ? 1 : 0),
-      action: this.pressed.space,
-    };
   }
 
   addToggle(code, callback) {
     this.toggles[code] = callback;
+  }
+
+  updateState() {
+    Object.assign(this.state, this.internalState);
   }
 }
 

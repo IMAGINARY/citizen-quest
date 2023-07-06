@@ -14062,11 +14062,11 @@ class PlayerApp {
     this.$element.append(this.stats.dom);
 
     this.keyboardInputMgr = new KeyboardInputMgr();
-    this.keyboardInputMgr.addListeners();
+    this.keyboardInputMgr.attachListeners();
     this.keyboardInputMgr.addToggle('KeyD', () => { this.stats.togglePanel(); });
 
     this.gamepadInputMgr = new GamepadInputMgr();
-    this.gamepadInputMgr.addListeners();
+    this.gamepadInputMgr.attachListeners();
 
     const inputMgr = this.gamepadInputMgr;
 
@@ -15414,29 +15414,11 @@ module.exports = clone;
   \***********************************************/
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-const EventEmitter = __webpack_require__(/*! events */ "./node_modules/events/events.js");
+const InputMgr = __webpack_require__(/*! ./input-mgr */ "./src/js/lib/input/input-mgr.js");
 
 /**
- * Type of the {@link eventNames} list.
- *
- * @typedef {["up", "down", "left", "right", "action", "lang"]} GamepadInputMgrEventNames
+ * @typedef {{axes?:{InputMgrEventNames:number},buttons?:{InputMgrEventNames:number}}} GamepadMapperConfig
  */
-
-/**
- * @typedef {{axes?:{GamepadInputMgrEventNames:number},buttons?:{GamepadInputMgrEventNames:number}}} GamepadMapperConfig
- */
-
-/**
- * @typedef {{"up": boolean, "down": boolean, "left": boolean, "right": boolean, "action": boolean, "lang": boolean}} GamepadInputMgrState
- */
-
-/**
- * Names of events emitted by the gamepad input manager.
- * These identical to the fields in the gamepad mapper configuration.
- *
- * @type {GamepadInputMgrEventNames}
- */
-const eventNames = ["up", "down", "left", "right", "action", "lang"];
 
 /**
  * Static gamepad configuration.
@@ -15458,74 +15440,35 @@ const staticMapperConfig = {
 };
 
 /**
- * Up button event.
- *
- * @event GamepadInputMgr.events#up
- */
-
-/**
- * Down button event.
- *
- * @event GamepadInputMgr.events#down
- */
-
-/**
- * Left button event.
- *
- * @event GamepadInputMgr.events#left
- */
-
-/**
- * Right button event.
- *
- * @event GamepadInputMgr.events#right
- */
-
-/**
- * Action button event.
- *
- * @event GamepadInputMgr.events#action
- */
-
-/**
- * Language button event.
- *
- * @event GamepadInputMgr.events#lang
- */
-
-/**
  * Handles gamepad and joystick input from the first available device.
+ *
+ * @augments InputMgr
  */
-class GamepadInputMgr {
-  constructor(config) {
-    this.config = config;
-    this.events = new EventEmitter();
+class GamepadInputMgr extends InputMgr {
+  constructor() {
+    super();
     this.mapper = new GamepadMapper(staticMapperConfig);
-    this.pressed = /** @type {GamepadInputMgrState} */ Object.fromEntries(
-      eventNames.map((e) => [e, false])
-    );
     this.gamepadIndex = -1;
-    this.hasListenersAttached = false;
     this.handleGamepadDisConnected = () => {
       const gamepad = navigator.getGamepads().find((g) => g !== null);
-      if (typeof gamepad !== "undefined") {
+      if (typeof gamepad !== 'undefined') {
         console.log(`Using gamepad ${gamepad.index}: ${gamepad.id}`);
         this.gamepadIndex = gamepad.index;
       } else {
-        console.log("No gamepad connected");
+        console.log('No gamepad connected');
         this.gamepadIndex = -1;
       }
     };
   }
 
-  addListeners() {
-    if (this.hasListenersAttached) return;
-    window.addEventListener("gamepadconnected", this.handleGamepadDisConnected);
+  attachListeners() {
+    if (this.isListening()) return;
+    window.addEventListener('gamepadconnected', this.handleGamepadDisConnected);
     window.addEventListener(
-      "gamepaddisconnected",
+      'gamepaddisconnected',
       this.handleGamepadDisConnected
     );
-    this.hasListenersAttached = true;
+    super.attachListeners();
     /**
      * TODO: Deal with SecurityError from missing gamepad permission.
      * TODO: Deal [missing secure context](https://github.com/w3c/gamepad/pull/120).
@@ -15534,43 +15477,22 @@ class GamepadInputMgr {
      */
   }
 
-  removeListeners() {
-    if (!this.hasListenersAttached) return;
+  detachListeners() {
+    if (!this.isListening()) return;
     window.removeEventListener(
-      "gamepaddisconnected",
+      'gamepaddisconnected',
       this.handleGamepadDisConnected
     );
     this.hasListenersAttached = false;
+    this.gamepadIndex = -1;
+    super.detachListeners();
   }
 
-  getDirection() {
-    return {
-      x: (this.pressed.right ? 1 : 0) - (this.pressed.left ? 1 : 0),
-      y: (this.pressed.down ? 1 : 0) - (this.pressed.up ? 1 : 0),
-      action: this.pressed.action,
-      lang: this.pressed.lang,
-    };
-  }
-
-  /**
-   * Read the gamepad input and emit events
-   * @fires GamepadInputMgr.events#up
-   * @fires GamepadInputMgr.events#down
-   * @fires GamepadInputMgr.events#left
-   * @fires GamepadInputMgr.events#right
-   * @fires GamepadInputMgr.events#action
-   * @fires GamepadInputMgr.events#lang
-   */
-  update() {
+  updateState() {
     const gamepad = navigator.getGamepads()[this.gamepadIndex] ?? null;
     if (gamepad !== null && gamepad.connected) {
-      const prevPressed = { ...this.pressed };
-      const pressed = this.mapper.grab(gamepad);
-      const eventsToFire = eventNames.filter(
-        (n) => !prevPressed[n] && pressed[n]
-      );
-      this.pressed = pressed;
-      eventsToFire.forEach((n) => this.events.emit(n));
+      const newState = this.mapper.grab(gamepad);
+      Object.assign(this.state, newState);
     }
   }
 }
@@ -15599,7 +15521,7 @@ class GamepadMapper {
      *
      * @private {[[string,(gamepad:Gamepad) => boolean]]}
      */
-    this.grabbers = eventNames.map((e) => [
+    this.grabbers = InputMgr.eventNames.map((e) => [
       e,
       GamepadMapper.createGrabberForConfigKey(config, e),
     ]);
@@ -15615,11 +15537,11 @@ class GamepadMapper {
    */
   static createGrabberForConfigKey(config, key) {
     const fromAxis =
-      typeof config?.axes[key] !== "undefined"
+      typeof config?.axes[key] !== 'undefined'
         ? GamepadMapper.createGrabberForAxis(config.axes[key])
         : () => false;
     const fromButton =
-      typeof config?.buttons[key] !== "undefined"
+      typeof config?.buttons[key] !== 'undefined'
         ? GamepadMapper.createGrabberForButton(config.buttons[key])
         : () => false;
     return (gamepad) => fromAxis(gamepad) || fromButton(gamepad);
@@ -15655,10 +15577,10 @@ class GamepadMapper {
    *  Grab the input from the gamepad for all event names.
    *
    * @param {Gamepad} gamepad The gamepad to grab the input from. Must not be null.
-   * @returns {GamepadInputMgrState}
+   * @returns {InputMgrState}
    */
   grab(gamepad) {
-    return /** @type {GamepadInputMgrState} */ Object.fromEntries(
+    return /** @type {InputMgrState} */ Object.fromEntries(
       this.grabbers.map(([key, grabber]) => [key, grabber(gamepad)])
     );
   }
@@ -15669,36 +15591,232 @@ module.exports = GamepadInputMgr;
 
 /***/ }),
 
+/***/ "./src/js/lib/input/input-mgr.js":
+/*!***************************************!*\
+  !*** ./src/js/lib/input/input-mgr.js ***!
+  \***************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const EventEmitter = __webpack_require__(/*! events */ "./node_modules/events/events.js");
+
+/**
+ * Type of the {@link eventNames} list.
+ *
+ * @typedef {["up", "down", "left", "right", "action", "lang"]} InputMgrEventNames
+ */
+
+/**
+ * @typedef {{"up": boolean, "down": boolean, "left": boolean, "right": boolean, "action": boolean, "lang": boolean}} InputMgrState
+ */
+
+/**
+ * Return type of {@link InputMgr#getDirection}.
+ * @typedef { x: number, y: number, action: boolean, lang: boolean } InputMgrDirection
+ */
+
+/**
+ * Up button event.
+ *
+ * @event InputMgr.events#up
+ */
+
+/**
+ * Down button event.
+ *
+ * @event InputMgr.events#down
+ */
+
+/**
+ * Left button event.
+ *
+ * @event InputMgr.events#left
+ */
+
+/**
+ * Right button event.
+ *
+ * @event InputMgr.events#right
+ */
+
+/**
+ * Action button event.
+ *
+ * @event InputMgr.events#action
+ */
+
+/**
+ * Language button event.
+ *
+ * @event InputMgr.events#lang
+ */
+
+/**
+ * Superclass for handling input.
+ */
+class InputMgr {
+  /**
+   * Names of events emitted by the gamepad input manager.
+   * These identical to the fields in the gamepad mapper configuration.
+   *
+   * @type {InputMgrEventNames}
+   */
+  static eventNames = ['up', 'down', 'left', 'right', 'action', 'lang'];
+
+  constructor() {
+    this.events = new EventEmitter();
+    this.state = InputMgr.getInitialState();
+    this.hasListenersAttached = false;
+  }
+
+  /**
+   * Tell if the input manager is listening to input, i.e. if the listeners are attached.
+   *
+   * @returns {boolean}
+   */
+  isListening() {
+    return this.hasListenersAttached;
+  }
+
+  /**
+   * Attach listeners to the input source.
+   *
+   * The {@link InputMgr#update} method will not fire events if the listeners are not attached.
+   */
+  attachListeners() {
+    this.hasListenersAttached = true;
+  }
+
+  /**
+   * Detach listeners from the input source.
+   *
+   * The {@link InputMgr#update} method will not fire events if the listeners are not attached.
+   */
+  detachListeners() {
+    this.hasListenersAttached = false;
+  }
+
+  /**
+   * Transform the input state into directional information.
+   *
+   * @returns {InputMgrDirection}
+   */
+  getDirection() {
+    return {
+      x: (this.state.right ? 1 : 0) - (this.state.left ? 1 : 0),
+      y: (this.state.down ? 1 : 0) - (this.state.up ? 1 : 0),
+      action: this.state.action,
+      lang: this.state.lang,
+    };
+  }
+
+  /**
+   * Get the initial state of the input manager, i.e. all buttons are released.
+   *
+   * @returns {InputMgrState}
+   */
+  static getInitialState() {
+    return /** @type {InputMgrState} */ Object.fromEntries(
+      InputMgr.eventNames.map((e) => [e, false])
+    );
+  }
+
+  /**
+   * Get the current state of the input manager.
+   *
+   * @returns {InputMgrState}
+   */
+  getState() {
+    return this.state;
+  }
+
+  /**
+   * Update the internal state of the input manager.
+   *
+   * This method is called by {@link InputMgr#update} and needs to be implemented by subclasses.
+   *
+   * @abstract
+   * @protected
+   */
+  updateState() {
+    throw new Error('Not implemented. Must be implemented by subclass!');
+  }
+
+  /**
+   * Read the input and emit events.
+   *
+   * This method does nothing if the listeners are not attached.
+   *
+   * @fires InputMgr.events#up
+   * @fires InputMgr.events#down
+   * @fires InputMgr.events#left
+   * @fires InputMgr.events#right
+   * @fires InputMgr.events#action
+   * @fires InputMgr.events#lang
+   */
+  update() {
+    if (!this.isListening()) return;
+
+    const prevState = { ...this.getState() };
+    this.updateState();
+    const eventsToFire = InputMgr.eventNames.filter(
+      (n) => !prevState[n] && this.state[n]
+    );
+    eventsToFire.forEach((n) => this.events.emit(n));
+  }
+}
+
+module.exports = InputMgr;
+
+
+/***/ }),
+
 /***/ "./src/js/lib/input/keyboard-input-mgr.js":
 /*!************************************************!*\
   !*** ./src/js/lib/input/keyboard-input-mgr.js ***!
   \************************************************/
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-const EventEmitter = __webpack_require__(/*! events */ "./node_modules/events/events.js");
+const InputMgr = __webpack_require__(/*! ./input-mgr */ "./src/js/lib/input/input-mgr.js");
 
-class KeyboardInputMgr {
+const codeToEventName = {
+  ArrowLeft: 'left',
+  ArrowUp: 'up',
+  ArrowRight: 'right',
+  ArrowDown: 'down',
+  Space: 'action',
+  KeyL: 'lang',
+};
+
+/**
+ * Handles keyboard input.
+ *
+ * @augments InputMgr
+ */
+class KeyboardInputMgr extends InputMgr {
   constructor() {
-    this.events = new EventEmitter();
+    super();
     this.handleKeyDown = this.handleKeyDown.bind(this);
     this.handleKeyUp = this.handleKeyUp.bind(this);
-    this.pressed = {
-      up: false,
-      down: false,
-      left: false,
-      right: false,
-    };
+    /**
+     * The internal state is used to track keydown events and is pushed to the superclass state as a whole via
+     * {@link updateState()}.
+     */
+    this.internalState = { ...this.state };
     this.toggles = {};
   }
 
-  addListeners() {
+  attachListeners() {
+    if (this.isListening()) return;
+    super.attachListeners();
     $(document).on('keydown', this.handleKeyDown);
     $(document).on('keyup', this.handleKeyUp);
   }
 
-  removeListeners() {
+  detachListeners() {
+    if (!this.isListening()) return;
     $(document).off('keydown', this.handleKeyDown);
     $(document).off('keyup', this.handleKeyUp);
+    super.detachListeners();
   }
 
   handleKeyDown(event) {
@@ -15706,52 +15824,32 @@ class KeyboardInputMgr {
     if (event.originalEvent.repeat) {
       return;
     }
-    // Read the arrow keys and the spacebar
-    if (event.code === 'ArrowLeft') {
-      this.pressed.left = true;
-      this.events.emit('left');
-    } else if (event.code === 'ArrowUp') {
-      this.pressed.up = true;
-      this.events.emit('up');
-    } else if (event.code === 'ArrowRight') {
-      this.pressed.right = true;
-      this.events.emit('right');
-    } else if (event.code === 'ArrowDown') {
-      this.pressed.down = true;
-      this.events.emit('down');
-    } else if (event.code === 'Space') {
-      this.pressed.space = true;
-      this.events.emit('action');
-    } else if (this.toggles[event.code]) {
+
+    // Process keys that have an event name assigned
+    if (typeof codeToEventName[event.code] !== 'undefined') {
+      const eventName = codeToEventName[event.code];
+      this.internalState[eventName] = true;
+    }
+
+    // Process toggles separately
+    if (this.toggles[event.code]) {
       this.toggles[event.code]();
     }
   }
 
   handleKeyUp(event) {
-    // Read the arrow keys
-    if (event.code === 'ArrowLeft') {
-      this.pressed.left = false;
-    } else if (event.code === 'ArrowUp') {
-      this.pressed.up = false;
-    } else if (event.code === 'ArrowRight') {
-      this.pressed.right = false;
-    } else if (event.code === 'ArrowDown') {
-      this.pressed.down = false;
-    } else if (event.code === 'Space') {
-      this.pressed.space = false;
+    if (typeof codeToEventName[event.code] !== 'undefined') {
+      const eventName = codeToEventName[event.code];
+      this.internalState[eventName] = false;
     }
-  }
-
-  getDirection() {
-    return {
-      x: (this.pressed.right ? 1 : 0) - (this.pressed.left ? 1 : 0),
-      y: (this.pressed.down ? 1 : 0) - (this.pressed.up ? 1 : 0),
-      action: this.pressed.space,
-    };
   }
 
   addToggle(code, callback) {
     this.toggles[code] = callback;
+  }
+
+  updateState() {
+    Object.assign(this.state, this.internalState);
   }
 }
 
@@ -16431,4 +16529,4 @@ cfgLoader.load([
 
 /******/ })()
 ;
-//# sourceMappingURL=default.d6393c67be5947488edf.js.map
+//# sourceMappingURL=default.1bc8ffbc4c57123333c0.js.map

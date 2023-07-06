@@ -61,11 +61,11 @@ class PlayerApp {
     this.$element.append(this.stats.dom);
 
     this.keyboardInputMgr = new KeyboardInputMgr();
-    this.keyboardInputMgr.addListeners();
+    this.keyboardInputMgr.attachListeners();
     this.keyboardInputMgr.addToggle('KeyD', () => { this.stats.togglePanel(); });
 
     this.gamepadInputMgr = new GamepadInputMgr();
-    this.gamepadInputMgr.addListeners();
+    this.gamepadInputMgr.attachListeners();
 
     const inputMgr = this.gamepadInputMgr;
 

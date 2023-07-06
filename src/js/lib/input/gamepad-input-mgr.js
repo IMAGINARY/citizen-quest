@@ -1,26 +1,8 @@
-const EventEmitter = require('events');
+const InputMgr = require('./input-mgr');
 
 /**
- * Type of the {@link eventNames} list.
- *
- * @typedef {["up", "down", "left", "right", "action", "lang"]} GamepadInputMgrEventNames
+ * @typedef {{axes?:{InputMgrEventNames:number},buttons?:{InputMgrEventNames:number}}} GamepadMapperConfig
  */
-
-/**
- * @typedef {{axes?:{GamepadInputMgrEventNames:number},buttons?:{GamepadInputMgrEventNames:number}}} GamepadMapperConfig
- */
-
-/**
- * @typedef {{"up": boolean, "down": boolean, "left": boolean, "right": boolean, "action": boolean, "lang": boolean}} GamepadInputMgrState
- */
-
-/**
- * Names of events emitted by the gamepad input manager.
- * These identical to the fields in the gamepad mapper configuration.
- *
- * @type {GamepadInputMgrEventNames}
- */
-const eventNames = ['up', 'down', 'left', 'right', 'action', 'lang'];
 
 /**
  * Static gamepad configuration.
@@ -42,54 +24,15 @@ const staticMapperConfig = {
 };
 
 /**
- * Up button event.
- *
- * @event GamepadInputMgr.events#up
- */
-
-/**
- * Down button event.
- *
- * @event GamepadInputMgr.events#down
- */
-
-/**
- * Left button event.
- *
- * @event GamepadInputMgr.events#left
- */
-
-/**
- * Right button event.
- *
- * @event GamepadInputMgr.events#right
- */
-
-/**
- * Action button event.
- *
- * @event GamepadInputMgr.events#action
- */
-
-/**
- * Language button event.
- *
- * @event GamepadInputMgr.events#lang
- */
-
-/**
  * Handles gamepad and joystick input from the first available device.
+ *
+ * @augments InputMgr
  */
-class GamepadInputMgr {
-  constructor(config) {
-    this.config = config;
-    this.events = new EventEmitter();
+class GamepadInputMgr extends InputMgr {
+  constructor() {
+    super();
     this.mapper = new GamepadMapper(staticMapperConfig);
-    this.pressed = /** @type {GamepadInputMgrState} */ Object.fromEntries(
-      eventNames.map((e) => [e, false])
-    );
     this.gamepadIndex = -1;
-    this.hasListenersAttached = false;
     this.handleGamepadDisConnected = () => {
       const gamepad = navigator.getGamepads().find((g) => g !== null);
       if (typeof gamepad !== 'undefined') {
@@ -102,14 +45,14 @@ class GamepadInputMgr {
     };
   }
 
-  addListeners() {
-    if (this.hasListenersAttached) return;
+  attachListeners() {
+    if (this.isListening()) return;
     window.addEventListener('gamepadconnected', this.handleGamepadDisConnected);
     window.addEventListener(
       'gamepaddisconnected',
       this.handleGamepadDisConnected
     );
-    this.hasListenersAttached = true;
+    super.attachListeners();
     /**
      * TODO: Deal with SecurityError from missing gamepad permission.
      * TODO: Deal [missing secure context](https://github.com/w3c/gamepad/pull/120).
@@ -118,43 +61,22 @@ class GamepadInputMgr {
      */
   }
 
-  removeListeners() {
-    if (!this.hasListenersAttached) return;
+  detachListeners() {
+    if (!this.isListening()) return;
     window.removeEventListener(
       'gamepaddisconnected',
       this.handleGamepadDisConnected
     );
     this.hasListenersAttached = false;
+    this.gamepadIndex = -1;
+    super.detachListeners();
   }
 
-  getDirection() {
-    return {
-      x: (this.pressed.right ? 1 : 0) - (this.pressed.left ? 1 : 0),
-      y: (this.pressed.down ? 1 : 0) - (this.pressed.up ? 1 : 0),
-      action: this.pressed.action,
-      lang: this.pressed.lang,
-    };
-  }
-
-  /**
-   * Read the gamepad input and emit events
-   * @fires GamepadInputMgr.events#up
-   * @fires GamepadInputMgr.events#down
-   * @fires GamepadInputMgr.events#left
-   * @fires GamepadInputMgr.events#right
-   * @fires GamepadInputMgr.events#action
-   * @fires GamepadInputMgr.events#lang
-   */
-  update() {
+  updateState() {
     const gamepad = navigator.getGamepads()[this.gamepadIndex] ?? null;
     if (gamepad !== null && gamepad.connected) {
-      const prevPressed = { ...this.pressed };
-      const pressed = this.mapper.grab(gamepad);
-      const eventsToFire = eventNames.filter(
-        (n) => !prevPressed[n] && pressed[n]
-      );
-      this.pressed = pressed;
-      eventsToFire.forEach((n) => this.events.emit(n));
+      const newState = this.mapper.grab(gamepad);
+      Object.assign(this.state, newState);
     }
   }
 }
@@ -183,7 +105,7 @@ class GamepadMapper {
      *
      * @private {[[string,(gamepad:Gamepad) => boolean]]}
      */
-    this.grabbers = eventNames.map((e) => [
+    this.grabbers = InputMgr.eventNames.map((e) => [
       e,
       GamepadMapper.createGrabberForConfigKey(config, e),
     ]);
@@ -239,10 +161,10 @@ class GamepadMapper {
    *  Grab the input from the gamepad for all event names.
    *
    * @param {Gamepad} gamepad The gamepad to grab the input from. Must not be null.
-   * @returns {GamepadInputMgrState}
+   * @returns {InputMgrState}
    */
   grab(gamepad) {
-    return /** @type {GamepadInputMgrState} */ Object.fromEntries(
+    return /** @type {InputMgrState} */ Object.fromEntries(
       this.grabbers.map(([key, grabber]) => [key, grabber(gamepad)])
     );
   }
