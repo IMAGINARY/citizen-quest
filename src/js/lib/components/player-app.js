@@ -5,6 +5,7 @@ require('../helpers-web/fill-with-aspect');
 const PCView = require('../views/pc-view');
 const KeyboardInputMgr = require('../input/keyboard-input-mgr');
 const GamepadInputMgr = require('../input/gamepad-input-mgr');
+const MultiplexInputMgr = require('../input/multiplex-input-mgr');
 const PlayerAppInputRouter = require('../input/player-app-input-router');
 const PlayerCharacter = require('../model/player-character');
 const DialogueOverlay = require('../dialogues/dialogue-overlay');
@@ -67,14 +68,26 @@ class PlayerApp {
     this.gamepadInputMgr = new GamepadInputMgr();
     this.gamepadInputMgr.attachListeners();
 
-    const inputMgr = this.gamepadInputMgr;
+    this.multiplexInputMgr = new MultiplexInputMgr(
+      this.keyboardInputMgr,
+      this.gamepadInputMgr
+    );
+    this.multiplexInputMgr.attachListeners();
+
+    const inputMgrs = [
+      this.keyboardInputMgr,
+      this.gamepadInputMgr,
+      this.multiplexInputMgr, // the multiplexer must be the last one
+    ];
+
+    const inputMgr = this.multiplexInputMgr;
 
     this.inputRouter = new PlayerAppInputRouter(inputMgr);
     this.inputRouter.routeToPcMovement(this);
 
     this.pixiApp.ticker.add((time) => {
       this.stats.frameBegin();
-      inputMgr.update();
+      inputMgrs.forEach((inputMgr) => inputMgr.update());
       if (this.canControlPc) {
         const { x, y } = inputMgr.getDirection();
         this.pc.setSpeed(x * 10, y * 10);

@@ -2191,6 +2191,7 @@ __webpack_require__(/*! ../helpers-web/fill-with-aspect */ "./src/js/lib/helpers
 const PCView = __webpack_require__(/*! ../views/pc-view */ "./src/js/lib/views/pc-view.js");
 const KeyboardInputMgr = __webpack_require__(/*! ../input/keyboard-input-mgr */ "./src/js/lib/input/keyboard-input-mgr.js");
 const GamepadInputMgr = __webpack_require__(/*! ../input/gamepad-input-mgr */ "./src/js/lib/input/gamepad-input-mgr.js");
+const MultiplexInputMgr = __webpack_require__(/*! ../input/multiplex-input-mgr */ "./src/js/lib/input/multiplex-input-mgr.js");
 const PlayerAppInputRouter = __webpack_require__(/*! ../input/player-app-input-router */ "./src/js/lib/input/player-app-input-router.js");
 const PlayerCharacter = __webpack_require__(/*! ../model/player-character */ "./src/js/lib/model/player-character.js");
 const DialogueOverlay = __webpack_require__(/*! ../dialogues/dialogue-overlay */ "./src/js/lib/dialogues/dialogue-overlay.js");
@@ -2253,14 +2254,26 @@ class PlayerApp {
     this.gamepadInputMgr = new GamepadInputMgr();
     this.gamepadInputMgr.attachListeners();
 
-    const inputMgr = this.gamepadInputMgr;
+    this.multiplexInputMgr = new MultiplexInputMgr(
+      this.keyboardInputMgr,
+      this.gamepadInputMgr
+    );
+    this.multiplexInputMgr.attachListeners();
+
+    const inputMgrs = [
+      this.keyboardInputMgr,
+      this.gamepadInputMgr,
+      this.multiplexInputMgr, // the multiplexer must be the last one
+    ];
+
+    const inputMgr = this.multiplexInputMgr;
 
     this.inputRouter = new PlayerAppInputRouter(inputMgr);
     this.inputRouter.routeToPcMovement(this);
 
     this.pixiApp.ticker.add((time) => {
       this.stats.frameBegin();
-      inputMgr.update();
+      inputMgrs.forEach((inputMgr) => inputMgr.update());
       if (this.canControlPc) {
         const { x, y } = inputMgr.getDirection();
         this.pc.setSpeed(x * 10, y * 10);
@@ -3941,6 +3954,67 @@ module.exports = KeyboardInputMgr;
 
 /***/ }),
 
+/***/ "./src/js/lib/input/multiplex-input-mgr.js":
+/*!*************************************************!*\
+  !*** ./src/js/lib/input/multiplex-input-mgr.js ***!
+  \*************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const InputMgr = __webpack_require__(/*! ./input-mgr */ "./src/js/lib/input/input-mgr.js");
+
+/**
+ * Combines input from multiple input managers into one.
+ *
+ * The lifecycle management and updating of the wrapped input managers is up to the user of this class.
+ *
+ * @augments InputMgr
+ */
+class MultiplexInputMgr extends InputMgr {
+  constructor(...inputMgrs) {
+    super();
+    this.inputMgrs = [];
+    inputMgrs.forEach((inputMgr) => this.addInputMgr(inputMgr));
+  }
+
+  /**
+   * Add an input manager to the multiplexer.
+   *
+   * @param {InputMgr} inputMgr
+   */
+  addInputMgr(inputMgr) {
+    this.inputMgrs.push(inputMgr);
+  }
+
+  /**
+   * Remove an input manager from the multiplexer.
+   *
+   * @param {InputMgr} inputMgr
+   */
+  removeInputMgr(inputMgr) {
+    const inputMgrIndex = this.inputMgrs.indexOf(inputMgr);
+    if (inputMgrIndex >= 0) {
+      this.inputMgrs.splice(inputMgrIndex, 1);
+    }
+  }
+
+  updateState() {
+    const newState = this.inputMgrs
+      .map((inputMgr) => inputMgr.getState())
+      .reduce((acc, state) => {
+        InputMgr.eventNames.forEach((eventName) => {
+          acc[eventName] ||= state[eventName];
+        });
+        return acc;
+      }, InputMgr.getInitialState());
+    Object.assign(this.state, newState);
+  }
+}
+
+module.exports = MultiplexInputMgr;
+
+
+/***/ }),
+
 /***/ "./src/js/lib/input/player-app-input-connections.js":
 /*!**********************************************************!*\
   !*** ./src/js/lib/input/player-app-input-connections.js ***!
@@ -4805,4 +4879,4 @@ fetch(configUrl, { cache: 'no-store' })
 
 /******/ })()
 ;
-//# sourceMappingURL=player.ce26f73890374517e74c.js.map
+//# sourceMappingURL=player.9a7f8afa0e415ef22d75.js.map
