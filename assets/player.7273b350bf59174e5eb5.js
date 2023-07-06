@@ -3793,11 +3793,11 @@ class GamepadMapper {
    */
   static createGrabberForConfigKey(config, key) {
     const fromAxis =
-      typeof config?.axes[key] !== 'undefined'
+      typeof config?.axes?.[key] !== 'undefined'
         ? GamepadMapper.createGrabberForAxis(config.axes[key])
         : () => false;
     const fromButton =
-      typeof config?.buttons[key] !== 'undefined'
+      typeof config?.buttons?.[key] !== 'undefined'
         ? GamepadMapper.createGrabberForButton(config.buttons[key])
         : () => false;
     return (gamepad) => fromAxis(gamepad) || fromButton(gamepad);
@@ -3816,7 +3816,7 @@ class GamepadMapper {
     const threshold = 0.5;
     // the division is intentional to distinguish between positive and negative zero (IEEE 754)
     const sign = Math.sign(1.0 / signedIndex);
-    return (gamepad) => sign * gamepad.axes[index] >= threshold;
+    return (gamepad) => sign * (gamepad.axes[index] ?? 0.0) >= threshold;
   }
 
   /**
@@ -3826,7 +3826,7 @@ class GamepadMapper {
    * @returns {(gamepad:Gamepad) => boolean}
    */
   static createGrabberForButton(index) {
-    return (gamepad) => gamepad.buttons[index].pressed;
+    return (gamepad) => gamepad.buttons[index]?.pressed ?? false;
   }
 
   /**
@@ -5039,4 +5039,4 @@ fetch(configUrl, { cache: 'no-store' })
 
 /******/ })()
 ;
-//# sourceMappingURL=player.2d78d90b3d98142bbdd8.js.map
+//# sourceMappingURL=player.7273b350bf59174e5eb5.js.map
