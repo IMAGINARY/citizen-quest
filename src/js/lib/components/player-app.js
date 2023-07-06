@@ -4,6 +4,7 @@ const TownView = require('../views/town-view');
 require('../helpers-web/fill-with-aspect');
 const PCView = require('../views/pc-view');
 const KeyboardInputMgr = require('../input/keyboard-input-mgr');
+const GamepadInputMgr = require('../input/gamepad-input-mgr');
 const PlayerAppInputRouter = require('../input/player-app-input-router');
 const PlayerCharacter = require('../model/player-character');
 const DialogueOverlay = require('../dialogues/dialogue-overlay');
@@ -63,13 +64,19 @@ class PlayerApp {
     this.keyboardInputMgr.addListeners();
     this.keyboardInputMgr.addToggle('KeyD', () => { this.stats.togglePanel(); });
 
-    this.inputRouter = new PlayerAppInputRouter(this.keyboardInputMgr);
+    this.gamepadInputMgr = new GamepadInputMgr();
+    this.gamepadInputMgr.addListeners();
+
+    const inputMgr = this.gamepadInputMgr;
+
+    this.inputRouter = new PlayerAppInputRouter(inputMgr);
     this.inputRouter.routeToPcMovement(this);
 
     this.pixiApp.ticker.add((time) => {
       this.stats.frameBegin();
+      inputMgr.update();
       if (this.canControlPc) {
-        const { x, y } = this.keyboardInputMgr.getDirection();
+        const { x, y } = inputMgr.getDirection();
         this.pc.setSpeed(x * 10, y * 10);
       }
       this.pcView.animate(time);
