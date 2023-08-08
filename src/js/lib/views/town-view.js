@@ -4,8 +4,10 @@ class TownView {
     this.config = config;
     this.textures = textures;
     this.display = new PIXI.Container();
+    this.transform = new PIXI.Container();
     this.bgLayer = new PIXI.Container();
     this.mainLayer = new PIXI.Container();
+    this.transform.addChild(this.display);
     this.display.addChild(this.bgLayer);
     this.display.addChild(this.mainLayer);
 

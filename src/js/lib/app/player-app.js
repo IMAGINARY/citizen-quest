@@ -107,7 +107,8 @@ class PlayerApp {
     await this.loadTextures();
 
     this.townView = new TownView(this.config, this.textures);
-    this.pixiApp.stage.addChild(this.townView.display);
+    this.townView.transform.scale = {x: 0.25, y: 0.25};
+    this.pixiApp.stage.addChild(this.townView.transform);
     this.pcView = new PCView(this.config, this.textures, this.pc, this.townView);
     this.otherPcViews = Object.fromEntries(
       Object.entries(this.otherPcs)
