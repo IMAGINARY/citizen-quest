@@ -61,6 +61,11 @@ class GamepadInputMgr extends InputMgr {
 
   attachListeners() {
     if (this.isListening()) return;
+
+    // Connect to the first of the already connected gamepads, if any.
+    this.handleGamepadDisConnected();
+
+    // Attach listeners to handle future connects and disconnects.
     window.addEventListener('gamepadconnected', this.handleGamepadDisConnected);
     window.addEventListener(
       'gamepaddisconnected',
