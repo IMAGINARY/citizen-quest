@@ -3,7 +3,11 @@ const deepmerge = require('deepmerge');
 const InputMgr = require('./input-mgr');
 
 /**
- * @typedef {{axes?:{InputMgrEventNames:number},buttons?:{InputMgrEventNames:number}}} GamepadMapperConfig
+ * @typedef {horizontal: number, vertical: number, invertHorizontal: boolean, invertVertical: boolean} GamepadMapperAxesConfig
+ */
+
+/**
+ * @typedef {{axes?:GamepadMapperAxesConfig,buttons?:{InputMgrEventNames:number}}} GamepadMapperConfig
  */
 
 /**
@@ -13,10 +17,10 @@ const InputMgr = require('./input-mgr');
  */
 const standardMapperConfig = {
   axes: {
-    up: -1,
-    down: 1,
-    left: -0,
-    right: 0,
+    horizontal: 0,
+    vertical: 1,
+    invertHorizontal: false,
+    invertVertical: false,
   },
   buttons: {
     up: 12,
@@ -107,7 +111,7 @@ class GamepadMapper {
    * Initilize the mapper with a configuration.
    *
    * @param {GamepadMapperConfig} config The configuration for mapping button pressed
-   *    and movement along axes to event names. If the same event name is mapped to an axis and a button, the axis takes
+   *    and movement along axis to event names. If the same event name is mapped to an axis and a button, the axis takes
    *    precedence.
    */
   constructor(config) {
@@ -134,9 +138,18 @@ class GamepadMapper {
    * @returns {(gamepad:Gamepad) => boolean}
    */
   static createGrabberForConfigKey(config, key) {
+    // compute a singed axis index for each direction
+    const horizontalFactor = config.axes.invertHorizontal ? -1 : 1;
+    const verticalFactor = config.axes.invertVertical ? -1 : 1;
+    const axesDirectionMap = {
+      up: +config.axes['vertical'] * verticalFactor,
+      down: -config.axes['vertical'] * verticalFactor,
+      left: +config.axes['horizontal'] * horizontalFactor,
+      right: -config.axes['horizontal'] * horizontalFactor,
+    };
     const fromAxis =
-      typeof config?.axes?.[key] !== 'undefined'
-        ? GamepadMapper.createGrabberForAxis(config.axes[key])
+      typeof axesDirectionMap[key] !== 'undefined'
+        ? GamepadMapper.createGrabberForAxis(axesDirectionMap[key])
         : () => false;
     const fromButton =
       typeof config?.buttons?.[key] !== 'undefined'
