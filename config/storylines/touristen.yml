@@ -2,10 +2,10 @@ storylines:
   touristen:
     decision:
       en: "Should the city build a Ferris wheel to promote tourism?"
-      de: "Sollte die Stadt ein Riesenrad bauen, um den Tourismus zu fördern?"
+      de: "Soll die Stadt ein Riesenrad bauen, um den Tourismus zu fördern?"
     prompt:
       en: "The mayor and the Spin City™ company want to build a Ferris wheel to promote tourism. Talk to citizens and help them take part in the decision."
-      de: "Die Bürgermeisterin und das Unternehmen Drehmoment™ wollen ein Riesenrad bauen, um den Tourismus zu fördern. Sprich mit den Bürger*innen und hilf ihnen, an der Entscheidung teilzunehmen."
+      de: "Die Bürgermeisterin und das Unternehmen Drehmoment™ wollen ein Riesenrad bauen, um den Tourismus zu fördern. Sprich mit den Bürger*innen und hilf ihnen, am Entscheidungsprozess teilzunehmen."
     npcs:
       mayor:
         name:
@@ -17,7 +17,7 @@ storylines:
             items:
               - text:
                   en: "We are proud of partnering with Spin City™ to build this magnificent Ferris Wheel."
-                  de: "Wir sind stolz auf die Zusammenarbeit mit Drehmoment™ beim Bau dieses großartigen Riesenrads."
+                  de: "Wir sind stolz, zusammen mit Drehmoment™ dieses großartige Riesenrad zu bauen."
               - text:
                   en: "It will make our city a premiere tourist destination."
                   de: "Es wird unsere Stadt zu einem erstklassigen Touristenziel machen."
@@ -38,7 +38,7 @@ storylines:
         dialogues:
           - text:
               en: 'Unfortunately, nobody buys newspapers to read about ferris wheels.'
-              de: 'Leider niemand kauft Zeitungen, um über Riesenräder zu lesen.'
+              de: 'Leider kauft niemand Zeitungen, um über Riesenräder zu lesen.'
       ferrisSalesman:
         name:
           en: "Spin City™ Salesman"
@@ -52,7 +52,7 @@ storylines:
                   de: 'Ich vertrete Drehmoment™. Wir sind begeistert von der Möglichkeit, ein fantastisches Riesenrad für diese Stadt zu bauen.'
               - text:
                   en: "It will improve the north part of the city, which is currently underdeveloped."
-                  de: "Es wird den nördlichen Teil der Stadt verbessern, der derzeit unterentwickelt ist."
+                  de: "Es wird den nördlichen Teil der Stadt aufwerten, der derzeit weniger entwickelt ist."
       biologist:
         name:
           en: "Biologist"
@@ -128,7 +128,7 @@ storylines:
         dialogues:
           - text:
               en: "We hope that people who come to ride the Ferris wheel will also visit the museum."
-              de: "Wir hoffen, dass die Leute, die zum Riesenrad fahren, auch das Museum besuchen werden."
+              de: "Wir hoffen, dass die Leute, die mit dem zum Riesenrad fahren, auch das Museum besuchen werden."
       citizenCool:
         name:
           en: "Video blogger"
@@ -239,7 +239,7 @@ storylines:
         dialogues:
           - text:
               en: "The north of the city is very neglected. This will only add more traffic, noise and problems."
-              de: "Um den Norden der Stadt kümmert sich niemand. Das wird noch mehr Verkehr, Lärm und Probleme bringen."
+              de: "Um den Norden der Stadt kümmert sich niemand. Da wird es noch mehr Verkehr, Lärm und Probleme geben."
       constructionWorker:
         name:
           en: "Engineer"
@@ -300,7 +300,7 @@ storylines:
                     de: "Ja, ich werde es versuchen."
                   thenText:
                     en: "Great! Come back when you found them."
-                    de: "Super! Komm zurück, wenn du sie gefunden hast."
+                    de: "Super! Komm zurück, wenn du es geschafft hast"
                   set: [ 'quest.unhappyCitizens.active' ]
                 - text:
                     en: "I’d rather help in some other way."
@@ -353,7 +353,7 @@ storylines:
               citizenBlue:
                 - text:
                     en: "The north of the city is very neglected. This will only add more traffic, noise and problems."
-                    de: "Um den Norden der Stadt kümmert sich niemand. Das wird noch mehr Verkehr, Lärm und Probleme bringen."
+                    de: "Um den Norden der Stadt kümmert sich niemand. Da wird es noch mehr Verkehr, Lärm und Probleme geben."
                   set: ['op.neg.north']
               constructionWorker:
                 - text:
@@ -376,8 +376,8 @@ storylines:
         available:
           dialogues:
             - text:
-                en: "I read there was a Ferris wheel in Nearbyville. It fell and crushed 50 people to death."
-                de: "Ich habe gelesen, dass es in der Nachbarstadt ein Riesenrad gab. Es fiel um und zerquetschte 50 Menschen."
+                en: "I read there was a Ferris wheel in Nearbyville. It fell and injured 50 people."
+                de: "Ich habe gelesen, dass es in Nebenhausen ein Riesenrad gab. Es fiel um und verletzte 50 Menschen."
               responses:
                 - text:
                     en: "Is that true?"
@@ -519,7 +519,7 @@ storylines:
                     de: "Wie sieht es mit den Auswirkungen auf Tiere aus?"
                   thenText:
                     en: "Animals? Should I be concerned? We need an expert opinion."
-                    de: "Tiere? Sollte ich mir Sorgen machen? Wir brauchen eine Expertenmeinung."
+                    de: "Tiere? Sollte ich mir Sorgen machen? Wir brauchen dazu eine meinung."
                   set: [ 'quest.environmentalImpact.active' ]
         stages:
           - prompt:
@@ -556,7 +556,7 @@ storylines:
                         de: "Natürlich hat etwas so Umweltfremdes einen großen Einfluss auf die Tiere."
                     - text:
                         en: "Ask at the university on the other side of the city. We always collaborate with them from the field."
-                        de: "Frag bei der Universität auf der anderen Seite der Stadt nach. In unserer Feldarbeit arbeiten wir oft zusammen."
+                        de: "Frag bei der Universität auf der anderen Seite der Stadt nach. In diesem Themenfeld arbeiten wir oft zusammen."
       citizenAssembly:
         npc: mayor
         mood: exclamation
@@ -593,7 +593,7 @@ storylines:
                   items:
                     - text:
                         en: 'Oh! Of course, those more affected by the Ferris wheel should be included. '
-                        de: 'Oh! Natürlich sollten die, die stärker vom Riesenrad betroffenen sind, eingebunden werden.'
+                        de: 'Oh! Natürlich sollen alle, die stärker vom Riesenrad betroffen sind, eingebunden werden.'
                     - text:
                         en: 'We will change the rules to allow immigrants who live in the city to participate and send out the invitation again.'
                         de: 'Wir werden die Regeln ändern, so dass zugewanderte Personen, die in der Stadt leben, teilnehmen können, und die Einladung erneut verschicken.'
@@ -734,7 +734,7 @@ storylines:
 #                    de: "Aber sie legen nicht fest, was sie mit dem Geld machen werden."
 #                - text:
 #                    en: "Can you find a good use for the funds?"
-#                    de: "Kannst du eine gute Verwendung für das Geld finden?"
+#                    de: "Fällt dir eine gute Verwendung für das Geld ein?"
 #                  responses:
 #                    - text:
 #                        en: "I’ll search for the best idea."
