@@ -119,7 +119,7 @@ storylines:
                   de: 'Disneyland hat kein Riesenrad.'
                 thenText:
                   en: 'There are twelve Disney parks in the world. Did you personally visit all of them?'
-                  de: 'Es gibt zwölf Disney_Parks auf der Welt. Hast du die alle persönlich besucht?'
+                  de: 'Es gibt zwölf Disney-Parks auf der Welt. Hast du die alle persönlich besucht?'
       museumDirector:
         name:
           en: "Museum Director"
@@ -128,7 +128,7 @@ storylines:
         dialogues:
           - text:
               en: "We hope that people who come to ride the Ferris wheel will also visit the museum."
-              de: "Wir hoffen, dass die Leute, die mit dem zum Riesenrad fahren, auch das Museum besuchen werden."
+              de: "Wir hoffen, dass die Leute, die mit dem Riesenrad fahren, auch das Museum besuchen werden."
       citizenCool:
         name:
           en: "Video blogger"
