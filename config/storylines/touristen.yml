@@ -519,7 +519,7 @@ storylines:
                     de: "Wie sieht es mit den Auswirkungen auf Tiere aus?"
                   thenText:
                     en: "Animals? Should I be concerned? We need an expert opinion."
-                    de: "Tiere? Sollte ich mir Sorgen machen? Wir brauchen dazu eine meinung."
+                    de: "Tiere? Sollte ich mir Sorgen machen? Wir brauchen dazu eine Person mit Fachwissen."
                   set: [ 'quest.environmentalImpact.active' ]
         stages:
           - prompt:
