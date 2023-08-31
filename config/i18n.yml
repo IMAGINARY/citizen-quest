@@ -2,16 +2,16 @@ i18n:
   ui:
     pressStart:
       en: "Press to start"
-      de: "Start mit knopfdruck"
+      de: "Start mit Knopfdruck"
     decisionMade:
       en: 'A decision has been made…'
       de: 'Eine Entscheidung wurde getroffen…'
     waitingToBegin:
       en: 'Get ready! A new game will begin soon.'
-      de: 'Bereit machen! Ein neues Spiel beginnt bald.'
+      de: 'Mach dich bereit! Ein neues Spiel beginnt bald.'
     waitingToEnd:
-      en: 'Waiting for the other players...'
-      de: 'Warten auf die anderen Spieler*innen...'
+      en: 'Waiting for the other players…'
+      de: 'Warte auf die anderen Spieler*innen…'
     pressToContinue:
       en: 'Press to continue'
-      de: 'Weiter mit knopfdruck'
+      de: 'Weiter mit Knopfdruck'
