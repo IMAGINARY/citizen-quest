@@ -93,6 +93,7 @@ const MapApp = require('./lib/app/map-app');
     }
   } catch (err) {
     showFatalError(err.message, err);
+    // eslint-disable-next-line no-console
     console.error(err);
   }
 })();

@@ -3,7 +3,7 @@ textures:
     - name: 'town-view'
       assets:
         - name: 'town-bg'
-          srcs: 'city-cbb.png'
+          srcs: 'city.png'
         - name: 'town-collmap'
           srcs: 'city-collmap.png'
         - name: 'player-1'

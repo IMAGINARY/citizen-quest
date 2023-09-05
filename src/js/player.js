@@ -110,6 +110,7 @@ const { PlayerAppStates } = require('./lib/app/player-app-states');
     }
   } catch (err) {
     showFatalError(err.message, err);
+    // eslint-disable-next-line no-console
     console.error(err);
   }
 })();

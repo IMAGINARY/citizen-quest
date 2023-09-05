@@ -2,7 +2,7 @@ npcs:
   mayor:
     name: Mayor
     spawn: { x: 0, y: 0 }
-    dialogues:
+    dialogue:
       - "Not"
       - "a valid"
       - "dialogue"

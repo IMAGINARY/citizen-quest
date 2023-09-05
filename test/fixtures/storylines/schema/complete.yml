@@ -10,33 +10,33 @@ npcs:
       en: Mayor
       es: Alcalde
     spawn: { x: 0, y: 0 }
-    dialogues:
+    dialogue:
       - text:
           en: "I like cake."
           es: "Me gusta la torta."
   baker:
     name: Joe Baker
     spawn: { x: 100, y: 100 }
-    dialogues:
+    dialogue:
       - text:
           en: "I can make 24 types of cake."
           es: "Puedo hacer 24 tipos de torta."
   citizen1:
     name: Citizen 1
     spawn: { x: 100, y: 0 }
-    dialogues:
+    dialogue:
       - text: "Mmm."
   citizen2:
     name: Citizen 2
     spawn: { x: 0, y: 100 }
-    dialogues:
+    dialogue:
       - text: "Zzz."
 quests:
   mayorIdea:
     npc: mayor
     mood: cake
     available:
-      dialogues:
+      dialogue:
         - text:
             en: "We should ask the baker."
             es: "Deberíamos preguntarle al panadero."
@@ -61,13 +61,13 @@ quests:
             - text:
                 en: "Then it's decided!"
                 es: "¡Entonces está decidido!"
-              set: ['quest.mayorIdea.done']
+              set: ['quest.mayorIdea.done', 'pnt.mayorIdea']
   celebration:
     npc: mayor
     mood: party
     required: mayorIdea
     available:
-      dialogues:
+      dialogue:
         - text:
             en: "Tell two citizens about the celebration."
             es: "Dile a dos ciudadanos sobre la celebración."
@@ -89,7 +89,7 @@ quests:
                   thenText:
                     en: "Thanks for telling people about the celebration!"
                     es: "¡Gracias por decirle a la gente sobre la celebración!"
-                  set: ['quest.celebration.done']
+                  set: ['quest.celebration.done', 'pnt.celebration']
                 - text:
                     en: "No"
                     es: "No"
@@ -119,3 +119,16 @@ dialogues:
     - text:
         en: "I can make 24 types of cake."
         es: "Puedo hacer 24 tipos de torta."
+ending:
+  dialogue:
+    - cond: 'COUNT("pnt") >=2'
+      text:
+        en: "It was a great cake day, and the city celebrated for years to come."
+        es: "Fue un gran día de las tortas, y la ciudad celebró durante años."
+    - cond: 'COUNT("pnt") = 1'
+      text:
+        en: "Cake day was celebrated, but maybe for the last time."
+        es: "El día de las tortas fue celebrado, pero tal vez por última vez."
+    - text:
+        en: "The city had no celebration."
+        es: "La ciudad no tuvo celebración."

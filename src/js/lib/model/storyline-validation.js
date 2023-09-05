@@ -40,10 +40,10 @@ function validateStorylineQuestActivatesItself(storyline) {
 
   Object.keys(storyline.quests || {}).forEach((questId) => {
     const activation = `quest.${questId}.active`;
-    if (storyline.quests[questId].available && storyline.quests[questId].available.dialogues) {
+    if (storyline.quests[questId].available && storyline.quests[questId].available.dialogue) {
       const dialogue = fromJson({
         id: `quest-${questId}-available`,
-        items: storyline.quests[questId].available.dialogues,
+        items: storyline.quests[questId].available.dialogue,
       });
       let isQuestActivated = false;
       dialogue.nodes.forEach((node) => {
@@ -148,6 +148,19 @@ function validateExpressions(storyline) {
   validateStorylineQuestStageCounter(storyline);
 }
 
+function validateStorylineEndingDialogue(storyline) {
+  if (storyline?.ending?.dialogue) {
+    const dialogue = fromJson({
+      id: 'ending',
+      items: storyline.ending.dialogue,
+    });
+
+    if (dialogue.nodes.find((node) => node.responses)) {
+      throw new Error('Ending dialogue nodes must not have responses');
+    }
+  }
+}
+
 /**
  * Check if the storyline is valid using the schema.
  */
@@ -177,6 +190,7 @@ function validateStoryline(storyline) {
   validateStorylineQuestActivatesItself(storyline);
   validateExpressions(storyline);
   validateStorylineQuestCompletes(storyline);
+  validateStorylineEndingDialogue(storyline);
 }
 
 module.exports = {

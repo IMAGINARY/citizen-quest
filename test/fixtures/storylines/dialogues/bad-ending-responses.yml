@@ -80,14 +80,24 @@ quests:
         dialogues:
           mayor:
             - text:
-                en: "Thanks for telling people about the celebration!"
-                es: "¡Gracias por decirle a la gente sobre la celebración!"
-              set: ['quest.celebration.done']
+                en: "Did you tell people?"
+                es: "¿Le dijiste a la gente?"
+              responses:
+                - text:
+                    en: "Yes"
+                    es: "Sí"
+                  thenText:
+                    en: "Thanks for telling people about the celebration!"
+                    es: "¡Gracias por decirle a la gente sobre la celebración!"
+                  set: ['quest.celebration.done']
+                - text:
+                    en: "No"
+                    es: "No"
       - prompt:
             en: "Tell two citizens about the celebration."
             es: "Dile a dos ciudadanos sobre la celebración."
         counter:
-          expression: '2<'
+          expression: 'COUNT("talkedCitizen")'
           max: 2
         dialogues:
           mayor:
@@ -109,3 +119,20 @@ dialogues:
     - text:
         en: "I can make 24 types of cake."
         es: "Puedo hacer 24 tipos de torta."
+ending:
+  dialogue:
+    - cond: 'COUNT("pnt") >=2'
+      text:
+        en: "It was a great cake day, and the city celebrated for years to come."
+        es: "Fue un gran día de las tortas, y la ciudad celebró durante años."
+      responses:
+        - text:
+            en: "There should not be a response here"
+            es: "No debería haber una respuesta aquí"
+    - cond: 'COUNT("pnt") = 1'
+      text:
+        en: "Cake day was celebrated, but maybe for the last time."
+        es: "El día de las tortas fue celebrado, pero tal vez por última vez."
+    - text:
+        en: "The city had no celebration."
+        es: "La ciudad no tuvo celebración."

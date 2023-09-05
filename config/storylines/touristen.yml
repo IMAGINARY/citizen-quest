@@ -12,7 +12,7 @@ storylines:
           en: "City Mayor"
           de: "Bürgermeisterin"
         spawn: { x: 3240, y: 2974 }
-        dialogues:
+        dialogue:
           - type: "sequence"
             items:
               - text:
@@ -25,8 +25,8 @@ storylines:
         name:
           en: "Director of the environmental agency"
           de: "Leiterin des Umweltamts"
-        spawn: { x: 3851, y: 2935 }
-        dialogues:
+        spawn: { x: 3816, y: 2890 }
+        dialogue:
           - text:
               en: 'This will be the first 100% eco-friendly Ferris wheel in the world.'
               de: 'Dies wird das erste 100% umweltfreundliche Riesenrad der Welt sein.'
@@ -35,7 +35,7 @@ storylines:
           en: "Journalist"
           de: "Journalist"
         spawn: { x: 5050, y: 3130 }
-        dialogues:
+        dialogue:
           - text:
               en: 'Unfortunately, nobody buys newspapers to read about ferris wheels.'
               de: 'Leider kauft niemand Zeitungen, um über Riesenräder zu lesen.'
@@ -44,7 +44,7 @@ storylines:
           en: "Spin City™ Salesman"
           de: "Drehmoment™ Verkaufsagent"
         spawn: {x: 3416, y: 3110 }
-        dialogues:
+        dialogue:
           - type: sequence
             items:
               - text:
@@ -58,7 +58,7 @@ storylines:
           en: "Biologist"
           de: "Biologin"
         spawn: { x: 4698, y: 990 }
-        dialogues:
+        dialogue:
           - text:
               en: "The scientific point of view should be taken into consideration when making decisions."
               de: "Der wissenschaftliche Standpunkt sollte bei Entscheidungen berücksichtigt werden."
@@ -67,7 +67,7 @@ storylines:
           en: "Tourist"
           de: "Tourist"
         spawn: { x: 2901, y: 2050 }
-        dialogues:
+        dialogue:
           - type: 'random'
             items:
               - text:
@@ -81,7 +81,7 @@ storylines:
           en: "Robot"
           de: "Roboter"
         spawn: { x: 5748, y: 2340 }
-        dialogues:
+        dialogue:
           - cond: 'op.neg.birds'
             text:
               en: 'I hope the wheel gets rid of all the birds and bats, they’re just flying rats.'
@@ -125,7 +125,7 @@ storylines:
           en: "Museum Director"
           de: "Museumsdirektorin"
         spawn: { x: 5213, y: 2290 }
-        dialogues:
+        dialogue:
           - text:
               en: "We hope that people who come to ride the Ferris wheel will also visit the museum."
               de: "Wir hoffen, dass die Leute, die mit dem Riesenrad fahren, auch das Museum besuchen werden."
@@ -133,8 +133,8 @@ storylines:
         name:
           en: "Video blogger"
           de: "Videobloggerin"
-        spawn: { x: 4226, y: 3130 }
-        dialogues:
+        spawn: { x: 4416, y: 3130 }
+        dialogue:
           - text:
               en: 'Subscribe to my channel and turn on notifications!'
               de: 'Abonniere meinen Kanal und schalte die Benachrichtigungen ein!'
@@ -143,7 +143,7 @@ storylines:
           en: "Optimistic Citizen"
           de: "Optimistische Bürgerin"
         spawn: { x: 311, y: 3130 }
-        dialogues:
+        dialogue:
           - type: 'random'
             items:
               - text:
@@ -157,7 +157,7 @@ storylines:
           en: "Curious Citizen"
           de: "Neugierige Bürgerin"
         spawn: { x: 2390, y: 2050 }
-        dialogues:
+        dialogue:
           - text:
               en: 'What do YOU think?'
               de: 'Was denkst DU?'
@@ -181,7 +181,7 @@ storylines:
           en: "Concerned Citizen"
           de: "Zweifelnder Bürger"
         spawn: { x: 3625, y: 1470 }
-        dialogues:
+        dialogue:
           - text:
               de: 'Das wird zu viel Verkehr, Lärm und Kriminalität in diesem ohnehin schon sehr vernachlässigten Viertel führen.'
               en: 'This will add a lot of traffic, noise, and crime to the area, which is already very neglected.'
@@ -190,7 +190,7 @@ storylines:
           en: "Concerned Citizen"
           de: "Zweifelnde Bürgerin"
         spawn: { x: 2455, y: 1470 }
-        dialogues:
+        dialogue:
           - text:
               en: 'Tourism = Trash + Noise + Crime'
               de: 'Tourismus = Müll + Lärm + Kriminalität'
@@ -199,7 +199,7 @@ storylines:
           en: "Optimistic Citizen"
           de: "Optimistischer Bürger"
         spawn: { x: 1673, y: 3130 }
-        dialogues:
+        dialogue:
           - type: sequence
             items:
               - text:
@@ -212,8 +212,8 @@ storylines:
         name:
           en: "Citizen"
           de: "Bürgerin"
-        spawn: { x: 4236, y: 2050 }
-        dialogues:
+        spawn: { x: 4286, y: 2050 }
+        dialogue:
           - type: sequence
             items:
               - text:
@@ -227,7 +227,7 @@ storylines:
           en: "Citizen"
           de: "Bürgerin"
         spawn: { x: 2146, y: 1480 }
-        dialogues:
+        dialogue:
           - text:
               en: "Nobody asked us, and they’re placing it right next to our homes."
               de: "Niemand hat uns gefragt, und sie stellen es direkt neben unsere Häuser."
@@ -235,8 +235,8 @@ storylines:
         name:
           en: "Concerned Citizen"
           de: "Zweifelnde Bürgerin"
-        spawn: { x: 1757, y: 2290 }
-        dialogues:
+        spawn: { x: 1946, y: 2051 }
+        dialogue:
           - text:
               en: "The north of the city is very neglected. This will only add more traffic, noise and problems."
               de: "Um den Norden der Stadt kümmert sich niemand. Da wird es noch mehr Verkehr, Lärm und Probleme geben."
@@ -244,8 +244,8 @@ storylines:
         name:
           en: "Engineer"
           de: "Ingenieurin"
-        spawn: { x: 6228, y: 3175 }
-        dialogues:
+        spawn: { x: 5846, y: 3130 }
+        dialogue:
           - text:
               en: 'Tourism makes everything more expensive! And there are so few available apartments already.'
               de: 'Der Tourismus macht alles teurer! Und es gibt schon jetzt so wenig freie Wohnungen.'
@@ -253,8 +253,8 @@ storylines:
         name:
           en: "Concerned Citizen"
           de: "Zweifelnde Bürgerin"
-        spawn: { x: 5773, y: 970 }
-        dialogues:
+        spawn: { x: 5660, y: 970 }
+        dialogue:
           - text:
               en: 'Tourists = Crime!'
               de: 'Touristen = Kriminalität!'
@@ -263,7 +263,7 @@ storylines:
           en: "Ranger"
           de: "Ranger"
         spawn: { x: 896, y: 2290 }
-        dialogues:
+        dialogue:
           - text:
               en: "Our landscape will be ruined by a giant metallic structure. I feel sad."
               de: "Unsere Landschaft wird durch eine riesige Metallkonstruktion verschandelt. Ich bin traurig."
@@ -272,7 +272,7 @@ storylines:
           en: "Composer"
           de: "Komponistin"
         spawn: { x: 6128, y: 2330 }
-        dialogues:
+        dialogue:
           - text:
               en: "I'm trying to get the plans for the Ferris wheel."
               de: "Ich versuche, die Pläne für das Riesenrad zu bekommen."
@@ -281,7 +281,7 @@ storylines:
           en: "Citizen"
           de: "Bürgerin"
         spawn: { x: 2521, y: 3154 }
-        dialogues:
+        dialogue:
           - text:
               en: 'I’m still concerned with the Ferris wheel’s safety.'
               de: 'Ich mache mir immer noch Sorgen um die Sicherheit des Riesenrads.'
@@ -290,7 +290,7 @@ storylines:
         npc: mayor
         mood: interrogation
         available:
-          dialogues:
+          dialogue:
             - text:
                 en: "Everyone loves the idea of having a Ferris wheel in the city. No? Can you find people who don't?"
                 de: "Alle lieben die Idee, ein Riesenrad in der Stadt zu haben. Nein? Kannst du Leute finden, die das nicht tun?"
@@ -323,7 +323,7 @@ storylines:
                     - text:
                         en: "I will try to think of a solution."
                         de: "Ich werde versuchen, eine Lösung zu finden."
-                  set: [ 'quest.unhappyCitizens.done', 'pnt.empathy.mayor' ]
+                      set: [ 'quest.unhappyCitizens.done', 'pnt.empathy.mayor' ]
           - prompt:
               en: "Find 3 citizens who don't want a Ferris wheel in the city."
               de: "Finde 3 Bürger*innen, die kein Riesenrad in der Stadt haben wollen."
@@ -374,7 +374,7 @@ storylines:
         npc: citizenChamp
         mood: exclamation
         available:
-          dialogues:
+          dialogue:
             - text:
                 en: "I read there was a Ferris wheel in Nearbyville. It fell and injured 50 people."
                 de: "Ich habe gelesen, dass es in Nebenhausen ein Riesenrad gab. Es fiel um und verletzte 50 Menschen."
@@ -441,7 +441,7 @@ storylines:
         mood: exclamation
         required: fakeNews1
         available:
-          dialogues:
+          dialogue:
             - type: sequence
               items:
                 - text:
@@ -497,7 +497,7 @@ storylines:
         npc: parksDirector
         mood: interrogation
         available:
-          dialogues:
+          dialogue:
             - text:
                 en: "This will be the first 100% eco-friendly Ferris wheel in the world."
                 de: "Dies wird das erste 100% umweltfreundliche Riesenrad der Welt sein."
@@ -562,7 +562,7 @@ storylines:
         mood: exclamation
         required: environmentalImpact
         available:
-          dialogues:
+          dialogue:
             - type: sequence
               items:
                 - text:
@@ -640,7 +640,7 @@ storylines:
         npc: citizenBlue
         mood: exclamation
         available:
-          dialogues:
+          dialogue:
             - text:
                 en: "Some of us don’t trust the Spin City™ company. We should be able to see what contracts the city is signing."
                 de: "Einige von uns trauen dem Unternehmen Drehmoment™ nicht. Wir sollten einsehen können, welche Verträge die Stadt unterzeichnet."
@@ -718,38 +718,166 @@ storylines:
                 - text:
                     en: "You want to read our contracts? You’d have to ask the mayor about that."
                     de: "Du willst unsere Verträge lesen? Da musst du die Bürgermeisterin fragen."
-#      profits:
-#        npc: journalist
-#        mood: interrogation
-#        required: openData
-#        available:
-#          dialogues:
-#            - type: sequence
-#              items:
-#                - text:
-#                    en: "The contracts say the city will receive a good percentage of profits from the Ferris wheel."
-#                    de: "In den Verträgen steht, dass die Stadt einen hohen Prozentsatz der Gewinne aus dem Riesenrad erhält."
-#                - text:
-#                    en: "But they don’t specify what they’ll do with the money."
-#                    de: "Aber sie legen nicht fest, was sie mit dem Geld machen werden."
-#                - text:
-#                    en: "Can you find a good use for the funds?"
-#                    de: "Fällt dir eine gute Verwendung für das Geld ein?"
-#                  responses:
-#                    - text:
-#                        en: "I’ll search for the best idea."
-#                        de: "Ich werde nach der besten Idee suchen."
-#                      set: [ 'quest.profits.active' ]
-#                    - text:
-#                        en: "I’ll leave it up to the government."
-#                        de: "Ich werde es der Regierung überlassen."
-#        stages:
-#          - prompt:
-#              en: "Find a good use for the city’s share of the Ferris wheel profits and share it with the mayor."
-#              de: "Finde eine gute Verwendung für den Anteil der Stadt am Gewinn des Riesenrads und gehe damit zur Bürgermeisterin."
-#            dialogues:
-    dialogues:
-      _ending:
+      profits:
+        npc: journalist
+        mood: interrogation
+        required: openData
+        available:
+          dialogue:
+            - type: sequence
+              items:
+                - text:
+                    en: "The contracts say the city will receive a good percentage of profits from the Ferris wheel."
+                    de: "In den Verträgen steht, dass die Stadt einen hohen Prozentsatz der Gewinne aus dem Riesenrad erhält."
+                - text:
+                    en: "But they don’t specify what they’ll do with the money."
+                    de: "Aber sie legen nicht fest, was sie mit dem Geld machen werden."
+                - text:
+                    en: "Can you find a good use for the funds?"
+                    de: "Kannst du eine gute Verwendung für das Geld finden?"
+                  responses:
+                    - text:
+                        en: "I’ll search for the best idea."
+                        de: "Ich werde nach der besten Idee suchen."
+                      set: [ 'quest.profits.active' ]
+                    - text:
+                        en: "I’ll leave it up to the government."
+                        de: "Ich werde es der Regierung überlassen."
+        stages:
+          - prompt:
+              en: "Find a good use for the city’s share of the Ferris wheel profits and share it with the mayor."
+              de: "Finde eine gute Verwendung für den Anteil der Stadt am Gewinn des Riesenrads und gehe damit zur Bürgermeisterin."
+            dialogues:
+              mayor:
+                - text:
+                    en: "The profits from the Ferris wheel? They’ll be helpful to cover general expenses. Do you have any specific idea?"
+                    de: "Die Gewinne aus dem Riesenrad? Sie helfen dabei, die allgemeinen Kosten zu decken. Hast du eine konkrete Idee?"
+                  responses:
+                    - cond: 'profits.idea.north'
+                      text:
+                        en: "Use it to improve the northern part of the city."
+                        de: "Den nördlichen Teil der Stadt damit aufwerten."
+                      thenText:
+                        en: "That’s sounds like a good idea."
+                        de: "Das klingt nach einer guten Idee."
+                      set: [ 'profits.decision.north', 'pnt.equity.profits', 'quest.profits.done' ]
+                    - cond: 'profits.idea.animals'
+                      text:
+                        en: "Use it to protect animals affected by the ferris wheel."
+                        de: "Die Tiere, die vom Riesenrad betroffen sind, damit schützen."
+                      thenText:
+                        en: "That’s sounds like a good idea."
+                        de: "Das klingt nach einer guten Idee."
+                      set: [ 'profits.decision.animals', 'pnt.equity.profits', 'quest.profits.done' ]
+                    - cond: 'profits.idea.museum'
+                      text:
+                        en: "Use it to improve the museum."
+                        de: "Das Museum damit fördern."
+                      thenText:
+                        en: "That’s sounds like a good idea."
+                        de: "Das klingt nach einer guten Idee."
+                      set: [ 'profits.decision.museum', 'pnt.equity.profits', 'quest.profits.done' ]
+                    - text:
+                        en: "Not right now."
+                        de: "Im Moment nicht."
+              biologist:
+                - text:
+                    en: "Suggest to the mayor to use the profits from the Ferris wheel for conservation of animals affected by it."
+                    de: "Schlage der Bürgermeisterin vor, die Gewinne aus dem Riesenrad für den Schutz der davon betroffenen Tiere zu verwenden."
+                  set: ['profits.idea.animals']
+              citizenBlue:
+                - text:
+                    en: "Suggest to the mayor to use the profits from the Ferris wheel to improve this part of the city, which will be most affected by it."
+                    de: "Schlage der Bürgermeisterin vor, die Gewinne aus dem Riesenrad für die Aufwertung dieses Stadtteils zu verwenden. Er ist am meisten davon betroffen."
+                  set: ['profits.idea.north']
+              museumDirector:
+                - text:
+                    en: "Suggest to the mayor to use the profits from the Ferris wheel in our museum, so we can help make tourists stay longer."
+                    de: "Schlage der Bürgermeisterin vor, die Gewinne aus dem Riesenrad für unser Museum zu verwenden. So tragen wir dazu bei, dass die Touristen länger bleiben."
+                  set: ['profits.idea.museum']
+              citizenLila:
+                - text:
+                    en: "Not everyone will better off with a Ferris wheel in the city. The best use of the profits would be to help those most negatively affected by it."
+                    de: "Nicht allen wird es mit einem Riesenrad in der Stadt besser gehen. Die beste Verwendung der Gewinne wäre, denjenigen zu helfen, die am meisten darunter leiden."
+              journalist:
+                - text:
+                    en: "Not everyone will better off with a Ferris wheel in the city. The best use of the profits would be to help those most negatively affected by it."
+                    de: "Nicht allen wird es mit einem Riesenrad in der Stadt besser gehen. Die beste Verwendung der Gewinne wäre, denjenigen zu helfen, die am meisten darunter leiden."
+              citizenWheelchair:
+                - text:
+                    en: "Not everyone will better off with a Ferris wheel in the city. The best use of the profits would be to help those most negatively affected by it."
+                    de: "Nicht allen wird es mit einem Riesenrad in der Stadt besser gehen. Die beste Verwendung der Gewinne wäre, denjenigen zu helfen, die am meisten darunter leiden."
+              citizenRanger:
+                - text:
+                    en: "Not everyone will better off with a Ferris wheel in the city. The best use of the profits would be to help those most negatively affected by it."
+                    de: "Nicht allen wird es mit einem Riesenrad in der Stadt besser gehen. Die beste Verwendung der Gewinne wäre, denjenigen zu helfen, die am meisten darunter leiden."
+      accessibility:
+        npc: citizenWheelchair
+        mood: interrogation
+        available:
+          dialogue:
+            - text:
+                en: "The ferris wheel, as projected, won’t be wheelchair accessible."
+                de: "Das Riesenrad wird, wie geplant, nicht für Menschen im Rollstuhl zugänglich sein."
+              responses:
+                - text:
+                    en: "I hope they realize that’s a mistake."
+                    de: "Ich hoffe, sie sehen ein, dass das ein Fehler ist."
+                  thenText:
+                    en: "Maybe not. If it’s not accessible, people on wheelchairs will simply not go."
+                    de: "Vielleicht auch nicht. Wenn es nicht zugänglich ist, werden Menschen im Rollstuhl einfach nicht hingehen."
+                - text:
+                    en: "We have to change that."
+                    de: "Das müssen wir ändern."
+                  thenText:
+                    en: "Yes. The company doesn’t answer my calls or emails."
+                    de: "Ja. Die Firma antwortet nicht auf meine Anrufe oder E-Mails."
+                  set: [ 'quest.accessibility.active' ]
+        stages:
+          - cond: 'quest.accessibility.refusal'
+            prompt:
+              en: "Find someone who can adapt the Ferris wheel."
+              de: "Finde jemanden, der das Riesenrad anpassen kann."
+            dialogues:
+              ferrisSalesman:
+                - text:
+                    en: "Unfortunately the Ferris wheel is manufactured abroad and can’t be adapted."
+                    de: "Leider wird das Riesenrad im Ausland hergestellt und kann nicht angepasst werden."
+              constructionWorker:
+                - type: sequence
+                  items:
+                    - text:
+                        en: "Mmm… let me study the plans…"
+                        de: "Mmm... lass mich die Pläne studieren..."
+                    - text: "…"
+                    - text:
+                        en: "… yes! We can adapt the Ferris wheel cabins for wheelchairs here in the city."
+                        de: "... ja! Wir können die Kabinen des Riesenrads für Rollstühle hier in der Stadt anpassen."
+                      set: [ 'quest.accessibility.done', 'pnt.equity.accessibility' ]
+              citizenPunk:
+                - text:
+                    en: "Making the Ferris wheel wheelchair accessible? That seems like a hardware problem."
+                    de: "Das Riesenrad für Menschen mit Rollstuhl zugänglich machen? Das scheint ein Hardware-Problem zu sein."
+              biologist:
+                - text:
+                    en: "Making the Ferris wheel wheelchair accessible? That seems like a hardware problem."
+                    de: "Das Riesenrad für Menschen mit Rollstuhl zugänglich machen? Das scheint ein Hardware-Problem zu sein."
+          - prompt:
+              en: "Ask Spin City™ to make the Ferris wheel accessible to people on wheelchairs."
+              de: "Bitte Drehmoment™, das Riesenrad für Menschen im Rollstuhl zugänglich zu machen."
+            dialogues:
+              ferrisSalesman:
+                - type: sequence
+                  items:
+                    - text:
+                        en: "We have a very strong commitment towards accessibility."
+                        de: "Wir engagieren uns sehr stark für die Barrierefreiheit."
+                    - text:
+                        en: "… unfortunately the Ferris wheel is manufactured abroad and can’t be adapted."
+                        de: "... leider wird das Riesenrad im Ausland hergestellt und kann nicht angepasst werden."
+                      set: [ 'quest.accessibility.refusal' ]
+    ending:
+      dialogue:
         - type: sequence
           items:
             - type: first

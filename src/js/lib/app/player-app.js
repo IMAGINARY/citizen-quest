@@ -1,5 +1,5 @@
 /* globals PIXI */
-const Stats = require('../helpers-web/stats.js');
+const Stats = require('../helpers-web/stats');
 const TownView = require('../views/town-view');
 require('../helpers-web/fill-with-aspect');
 const PCView = require('../views/pc-view');
@@ -36,7 +36,8 @@ class PlayerApp {
     this.flags = new FlagStore();
     this.storylineManager = new StorylineManager(this.config);
     this.storylineManager.events.on('storylineChanged',
-      this.handleStorylineChanged.bind(this));
+      this.handleStorylineChanged.bind(this)
+    );
 
     this.questTracker = new QuestTracker(config, this.storylineManager, this.flags);
 
@@ -107,12 +108,12 @@ class PlayerApp {
     this.$element.append(this.stats.dom);
 
     // Temporary scoring manager
-    const seenFlags = {};
+    this.seenFlags = {};
     this.flags.events.on('flag', (flagId, value, oldValue, setter) => {
-      if (seenFlags[flagId]) {
+      if (this.seenFlags[flagId]) {
         return;
       }
-      seenFlags[flagId] = true;
+      this.seenFlags[flagId] = true;
       if (flagId.startsWith('pnt.') && setter !== 'remote') {
         const flagParts = flagId.split('.');
         const category = flagParts[1];
@@ -391,6 +392,7 @@ class PlayerApp {
 
   clearFlags() {
     this.flags.clear();
+    this.seenFlags = {};
   }
 
   playDialogue(dialogue, npc = null) {
@@ -490,7 +492,10 @@ class PlayerApp {
   }
 
   handleStorylineEnd() {
-    const [ endingText, classes ] = readEnding(this.storylineManager.getDialogue('_ending'), this.getDialogueContext());
+    const [endingText, classes] = readEnding(
+      this.storylineManager.getEndingDialogue(),
+      this.getDialogueContext()
+    );
 
     this.endingScreen = new DecisionScreen(this.config, this.lang);
     this.$element.append(this.endingScreen.$element);

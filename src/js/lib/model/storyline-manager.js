@@ -1,5 +1,4 @@
 const EventEmitter = require('events');
-const Dialogue = require('../dialogues/dialogue');
 const safeBuildDialogueFromItems = require('../dialogues/dialogue-safe-builder');
 
 class StorylineManager {
@@ -66,6 +65,18 @@ class StorylineManager {
   getNpcs() {
     const currentStoryline = this.getCurrentStoryline();
     return currentStoryline ? this.getCurrentStoryline().npcs || {} : {};
+  }
+
+  getEnding() {
+    return this.getCurrentStoryline()?.ending || null;
+  }
+
+  getEndingDialogue() {
+    const ending = this.getEnding();
+    if (!ending || !ending.dialogue) {
+      return null;
+    }
+    return safeBuildDialogueFromItems('ending', ending.dialogue);
   }
 }
 

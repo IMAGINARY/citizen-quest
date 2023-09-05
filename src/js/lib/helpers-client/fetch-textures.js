@@ -1,6 +1,9 @@
 /* globals PIXI */
 
 async function fetchTextures(basePath, manifest, bundle) {
+  PIXI.Assets.resolver.setDefaultSearchParams({
+    t: Date.now(), // Cache buster
+  });
   await PIXI.Assets.init({
     basePath,
     manifest,

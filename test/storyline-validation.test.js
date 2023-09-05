@@ -45,7 +45,7 @@ describe('Storyline validation', () => {
 
     it('should validate npc dialogues', () => {
       const storyline = loadFixture('schema/bad-npc-dialogue.yml');
-      expect(() => validateStoryline(storyline)).to.throw('/npcs/mayor/dialogues/0');
+      expect(() => validateStoryline(storyline)).to.throw('/npcs/mayor/dialogue/0');
     });
 
     it('should validate quests', () => {
@@ -55,7 +55,7 @@ describe('Storyline validation', () => {
 
     it('should validate quest available dialogues', () => {
       const storyline = loadFixture('schema/bad-quest-available.yml');
-      expect(() => validateStoryline(storyline)).to.throw('/quests/mayorIdea/available/dialogues: must be array');
+      expect(() => validateStoryline(storyline)).to.throw('/quests/mayorIdea/available/dialogue: must be array');
     });
 
     it('should validate quest requirements', () => {
@@ -100,6 +100,13 @@ describe('Storyline validation', () => {
     it('should validate that stage condition expressions are valid', () => {
       const storyline = loadFixture('expressions/bad-stage-condition.yml');
       expect(() => validateStoryline(storyline)).to.throw('unexpected EOF');
+    });
+  });
+
+  describe('dialogues', () => {
+    it('should validate that the ending dialogue doesn\'t have nodes with resposes', () => {
+      const storyline = loadFixture('dialogues/bad-ending-responses.yml');
+      expect(() => validateStoryline(storyline)).to.throw('Ending dialogue nodes must not have responses');
     });
   });
 

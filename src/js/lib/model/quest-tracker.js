@@ -35,7 +35,7 @@ class QuestTracker {
 
   getAvailableQuests() {
     return Object.keys(this.storylineManager.getAllQuests())
-      .filter(id => !this.questIsDone(id) && this.questRequirementsMet(id))
+      .filter((id) => !this.questIsDone(id) && this.questRequirementsMet(id))
       .slice(0, this.config.game.maxActiveQuests || 3);
   }
 
@@ -55,7 +55,7 @@ class QuestTracker {
   questRequirementsMet(questId) {
     const requiredQuests = this.storylineManager.getQuest(questId).required || null;
     return !requiredQuests
-      || [requiredQuests].flat().every(id => this.questIsDone(id));
+      || [requiredQuests].flat().every((id) => this.questIsDone(id));
   }
 
   setActiveQuest(questId) {
@@ -133,7 +133,7 @@ class QuestTracker {
       return;
     }
     const newStage = this.storylineManager.getQuest(this.activeQuestId).stages
-      .findIndex(stage => stage.cond === undefined || !!this.logicParser.evaluate(stage.cond));
+      .findIndex((stage) => stage.cond === undefined || !!this.logicParser.evaluate(stage.cond));
 
     this.setActiveStage(newStage);
   }
@@ -159,16 +159,16 @@ class QuestTracker {
     const currentStoryline = this.storylineManager.getCurrentStoryline();
     const currentQuest = this.storylineManager.getQuest(this.activeQuestId);
     const currentStage = currentQuest?.stages[this.activeStage];
-    const storylineDialogue = currentStoryline?.dialogues?.[npcId]
-    const npcDialogue = currentStoryline?.npcs?.[npcId]?.dialogues
+    const storylineDialogue = currentStoryline?.dialogues?.[npcId];
+    const npcDialogue = currentStoryline?.npcs?.[npcId]?.dialogue;
     const stageDialogue = currentStage?.dialogues?.[npcId];
     const questDialogue = currentQuest?.dialogues?.[npcId];
     return [
       ...(stageDialogue || []),
       ...(questDialogue || []),
       ...(this.getAvailableQuests()
-        .filter(id => this.storylineManager.getQuest(id)?.npc === npcId)
-        .map(id => this.storylineManager.getQuest(id)?.available?.dialogues || []).flat()),
+        .filter((id) => this.storylineManager.getQuest(id)?.npc === npcId)
+        .map((id) => this.storylineManager.getQuest(id)?.available?.dialogue || []).flat()),
       ...(npcDialogue || []),
       ...(storylineDialogue || []),
     ];

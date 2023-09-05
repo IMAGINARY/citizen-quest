@@ -10,33 +10,33 @@ npcs:
       en: Mayor
       es: Alcalde
     spawn: { x: 0, y: 0 }
-    dialogues:
+    dialogue:
       - text:
           en: "I like cake."
           es: "Me gusta la torta."
   baker:
     name: Joe Baker
     spawn: { x: 100, y: 100 }
-    dialogues:
+    dialogue:
       - text:
           en: "I can make 24 types of cake."
           es: "Puedo hacer 24 tipos de torta."
   citizen1:
     name: Citizen 1
     spawn: { x: 100, y: 0 }
-    dialogues:
+    dialogue:
       - text: "Mmm."
   citizen2:
     name: Citizen 2
     spawn: { x: 0, y: 100 }
-    dialogues:
+    dialogue:
       - text: "Zzz."
 quests:
   mayorIdea:
     npc: mayor
     mood: cake
     available:
-      dialogues:
+      dialogue:
         - text:
             en: "We should ask the baker."
             es: "Deberíamos preguntarle al panadero."
@@ -66,7 +66,7 @@ quests:
     mood: party
     required: mayorIdea
     available:
-      dialogues:
+      dialogue:
         - text:
             en: "Tell two citizens about the celebration."
             es: "Dile a dos ciudadanos sobre la celebración."

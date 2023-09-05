@@ -1,9 +1,42 @@
+decision:
+  en: "Should we celebrate cake day?"
+  es: "¿Deberíamos celebrar el día de las tortas?"
+prompt:
+  en: "Should we celebrate cake day? Talk to people to find out."
+  es: "¿Deberíamos celebrar el día de las tortas? Habla con la gente para averiguarlo."
+npcs:
+  mayor:
+    name:
+      en: Mayor
+      es: Alcalde
+    spawn: { x: 0, y: 0 }
+    dialogue:
+      - text:
+          en: "I like cake."
+          es: "Me gusta la torta."
+  baker:
+    name: Joe Baker
+    spawn: { x: 100, y: 100 }
+    dialogue:
+      - text:
+          en: "I can make 24 types of cake."
+          es: "Puedo hacer 24 tipos de torta."
+  citizen1:
+    name: Citizen 1
+    spawn: { x: 100, y: 0 }
+    dialogue:
+      - text: "Mmm."
+  citizen2:
+    name: Citizen 2
+    spawn: { x: 0, y: 100 }
+    dialogue:
+      - text: "Zzz."
 quests:
   mayorIdea:
     npc: mayor
     mood: cake
     available:
-      dialogues:
+      dialogue:
         mayor:
           - text:
               en: "We should ask the baker."
@@ -22,4 +55,81 @@ quests:
             - text:
                 en: "I agree about celebrating cake day."
                 es: "Estoy de acuerdo con celebrar el día de las tortas."
-              set: [ 'talkedToBaker' ]
+              set: ['talkedToBaker']
+      - cond: 'talkedToBaker'
+        dialogues:
+          mayor:
+            - text:
+                en: "Then it's decided!"
+                es: "¡Entonces está decidido!"
+              set: ['quest.mayorIdea.done', 'pnt.mayorIdea']
+  celebration:
+    npc: mayor
+    mood: party
+    required: mayorIdea
+    available:
+      dialogue:
+        - text:
+            en: "Tell two citizens about the celebration."
+            es: "Dile a dos ciudadanos sobre la celebración."
+          set: ['quest.celebration.active']
+    stages:
+      - cond: 'COUNT("talkedCitizen") >=2'
+        prompt:
+          en: "Go back to the mayor."
+          es: "Vuelve con el alcalde."
+        dialogues:
+          mayor:
+            - text:
+                en: "Did you tell people?"
+                es: "¿Le dijiste a la gente?"
+              responses:
+                - text:
+                    en: "Yes"
+                    es: "Sí"
+                  thenText:
+                    en: "Thanks for telling people about the celebration!"
+                    es: "¡Gracias por decirle a la gente sobre la celebración!"
+                  set: ['quest.celebration.done', 'pnt.celebration']
+                - text:
+                    en: "No"
+                    es: "No"
+      - prompt:
+          en: "Tell two citizens about the celebration."
+          es: "Dile a dos ciudadanos sobre la celebración."
+        counter:
+          expression: 'COUNT("talkedCitizen")'
+          max: 2
+        dialogues:
+          mayor:
+            - text:
+                en: "Tell two citizens about the celebration."
+                es: "Dile a dos ciudadanos sobre la celebración."
+          citizen1:
+            - text:
+                en: "I'm excited for cake day!"
+                es: "¡Estoy emocionado por el día de las tortas!"
+              set: ['talkedCitizen.1']
+          citizen2:
+            - text:
+                en: "I'm excited for cake day!"
+                es: "¡Estoy emocionado por el día de las tortas!"
+              set: ['talkedCitizen.2']
+dialogues:
+  baker:
+    - text:
+        en: "I can make 24 types of cake."
+        es: "Puedo hacer 24 tipos de torta."
+ending:
+  dialogue:
+    - cond: 'COUNT("pnt") >=2'
+      text:
+        en: "It was a great cake day, and the city celebrated for years to come."
+        es: "Fue un gran día de las tortas, y la ciudad celebró durante años."
+    - cond: 'COUNT("pnt") = 1'
+      text:
+        en: "Cake day was celebrated, but maybe for the last time."
+        es: "El día de las tortas fue celebrado, pero tal vez por última vez."
+    - text:
+        en: "The city had no celebration."
+        es: "La ciudad no tuvo celebración."

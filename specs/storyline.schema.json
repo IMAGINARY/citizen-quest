@@ -17,6 +17,9 @@
     },
     "dialogues": {
       "$ref": "#/definitions/indexedDialogues"
+    },
+    "ending": {
+      "$ref": "#/definitions/ending"
     }
   },
   "additionalProperties": false,
@@ -36,12 +39,12 @@
         "spawn": {
           "$ref": "#/definitions/point"
         },
-        "dialogues": {
+        "dialogue": {
           "$ref": "#/definitions/dialogue"
         }
       },
       "additionalProperties": false,
-      "required": ["name", "spawn", "dialogues"]
+      "required": ["name", "spawn", "dialogue"]
     },
     "quests": {
       "type": "object",
@@ -64,8 +67,8 @@
         "available": {
           "type": "object",
           "properties": {
-            "dialogues": {
-              "$ref": "dialogue.schema.json#/definitions/nodeList"
+            "dialogue": {
+              "$ref": "#/definitions/dialogue"
             }
           }
         },
@@ -126,15 +129,19 @@
       "additionalProperties": false,
       "required": ["expression", "max"]
     },
+    "ending": {
+      "type": "object",
+      "properties": {
+        "dialogue": {
+          "$ref": "#/definitions/dialogue"
+        }
+      },
+      "additionalProperties": false,
+      "required": ["dialogue"]
+    },
     "indexedDialogues": {
       "type": "object",
       "additionalProperties": {
-        "$ref": "#/definitions/dialogue"
-      }
-    },
-    "dialogues": {
-      "type": "array",
-      "items": {
         "$ref": "#/definitions/dialogue"
       }
     },
