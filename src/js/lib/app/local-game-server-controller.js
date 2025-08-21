@@ -11,6 +11,7 @@ class LocalGameServerController {
   }
 
   roundEnd() {
+    this.playerApp.roundTimer.pause();
     this.playerApp.setState(PlayerAppStates.ENDING);
   }
 

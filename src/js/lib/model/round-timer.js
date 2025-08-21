@@ -1,5 +1,4 @@
 const EventEmitter = require('events');
-
 class RoundTimer {
   constructor(seconds) {
     this.durationSecs = seconds;
@@ -28,10 +27,12 @@ class RoundTimer {
     this.ended = !(this.durationSecs > 0);
     this.setRemainingTime(this.durationSecs);
     if (this.getRemainingTime() > 0) {
-      this.interval = setInterval(() => {
-        this.setRemainingTime(this.getRemainingTime() - 1);
-      }, 1000);
+      this.startTimer();
     }
+  }
+
+  pause() {
+    this.endTimer();
   }
 
   forceEnd() {
@@ -39,10 +40,24 @@ class RoundTimer {
   }
 
   onEnd() {
-    clearInterval(this.interval);
+    this.endTimer();
     if (!this.ended) {
       this.ended = true;
       this.events.emit('end');
+    }
+  }
+
+  startTimer() {
+    this.endTimer();
+    this.interval = setInterval(() => {
+      this.setRemainingTime(this.getRemainingTime() - 1);
+    }, 1000);
+  }
+
+  endTimer() {
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = null;
     }
   }
 }
