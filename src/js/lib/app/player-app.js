@@ -241,8 +241,11 @@ class PlayerApp {
       });
     }
 
-    const gamepadMapperConfig = this.config?.players?.[this.playerId]?.gamepadMapping ?? {};
-    const gamepadInputMgr = new GamepadInputMgr(gamepadMapperConfig);
+    const playerConfig = this.config?.players?.[this.playerId];
+    const gamepadInputMgr = new GamepadInputMgr(
+      playerConfig?.gamepadMapping ?? {},
+      playerConfig?.gamepad ?? null
+    );
     gamepadInputMgr.attachListeners();
 
     const multiplexInputMgr = new MultiplexInputMgr(

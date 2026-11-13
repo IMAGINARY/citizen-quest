@@ -19,6 +19,16 @@ const GamepadMapper = require('./gamepad-mapper');
  */
 
 /**
+ * Selects which gamepad to use.
+ *
+ * - null: the first connected gamepad.
+ * - integer: the gamepad whose Gamepad.index matches.
+ * - string: the gamepad whose Gamepad.id matches.
+ *
+ * @typedef {number|string|null} GamepadSelector
+ */
+
+/**
  * Gamepad configuration for standard gamepads.
  *
  * @type {GamepadMapperConfig}
@@ -41,15 +51,21 @@ const standardMapperConfig = {
 };
 
 /**
- * Handles gamepad and joystick input from the first available device.
+ * Handles gamepad and joystick input from a single device.
+ *
+ * The device is chosen by a {@link GamepadSelector}. By default it is the
+ * first available device.
  *
  * @augments InputMgr
  */
 class GamepadInputMgr extends InputMgr {
   /**
    * @param {GamepadMapperConfig} [mapperConfig]
+   * @param {GamepadSelector} [gamepadSelector]
+   *  Which gamepad to use (see {@link GamepadSelector}). Defaults to the first
+   *  connected gamepad.
    */
-  constructor(mapperConfig = {}) {
+  constructor(mapperConfig = {}, gamepadSelector = null) {
     super();
     logger.info(
       mapperConfig,
@@ -58,17 +74,48 @@ class GamepadInputMgr extends InputMgr {
     this.mapper = new GamepadMapper(
       deepmerge(standardMapperConfig, mapperConfig ?? {})
     );
+    this.gamepadSelector = gamepadSelector ?? null;
+    if (this.gamepadSelector !== null
+      && !Number.isInteger(this.gamepadSelector)
+      && typeof this.gamepadSelector !== 'string') {
+      logger.warn(`Invalid gamepad selector ${JSON.stringify(this.gamepadSelector)}. It must be an integer (index) or a string (id).`);
+    }
     this.gamepadIndex = -1;
     this.handleGamepadDisConnected = () => {
-      const gamepad = navigator.getGamepads().find((g) => g !== null);
+      const gamepad = this.findConfiguredGamepad();
       if (typeof gamepad !== 'undefined') {
         logger.info(`Using gamepad ${gamepad.index}: ${gamepad.id}`);
         this.gamepadIndex = gamepad.index;
       } else {
-        logger.info('No gamepad connected');
+        if (this.gamepadSelector === null) {
+          logger.info('No gamepad connected');
+        } else {
+          logger.info(`Configured gamepad ${JSON.stringify(this.gamepadSelector)} not found`);
+        }
         this.gamepadIndex = -1;
       }
     };
+  }
+
+  /**
+   * Finds the connected gamepad that matches the configured selector.
+   *
+   * @returns {Gamepad|undefined}
+   *  The matching gamepad, or undefined if none matches.
+   */
+  findConfiguredGamepad() {
+    const gamepads = navigator.getGamepads().filter((g) => g !== null);
+    const selector = this.gamepadSelector;
+    if (selector === null) {
+      return gamepads[0];
+    }
+    if (Number.isInteger(selector)) {
+      return gamepads.find((g) => g.index === selector);
+    }
+    if (typeof selector === 'string') {
+      return gamepads.find((g) => g.id === selector);
+    }
+    return undefined;
   }
 
   attachListeners() {

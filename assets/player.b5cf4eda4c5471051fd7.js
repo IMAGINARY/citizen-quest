@@ -33021,6 +33021,150 @@ exports["default"] = def;
 
 /***/ }),
 
+/***/ "./node_modules/deepmerge/dist/cjs.js":
+/*!********************************************!*\
+  !*** ./node_modules/deepmerge/dist/cjs.js ***!
+  \********************************************/
+/***/ ((module) => {
+
+"use strict";
+
+
+var isMergeableObject = function isMergeableObject(value) {
+	return isNonNullObject(value)
+		&& !isSpecial(value)
+};
+
+function isNonNullObject(value) {
+	return !!value && typeof value === 'object'
+}
+
+function isSpecial(value) {
+	var stringValue = Object.prototype.toString.call(value);
+
+	return stringValue === '[object RegExp]'
+		|| stringValue === '[object Date]'
+		|| isReactElement(value)
+}
+
+// see https://github.com/facebook/react/blob/b5ac963fb791d1298e7f396236383bc955f916c1/src/isomorphic/classic/element/ReactElement.js#L21-L25
+var canUseSymbol = typeof Symbol === 'function' && Symbol.for;
+var REACT_ELEMENT_TYPE = canUseSymbol ? Symbol.for('react.element') : 0xeac7;
+
+function isReactElement(value) {
+	return value.$$typeof === REACT_ELEMENT_TYPE
+}
+
+function emptyTarget(val) {
+	return Array.isArray(val) ? [] : {}
+}
+
+function cloneUnlessOtherwiseSpecified(value, options) {
+	return (options.clone !== false && options.isMergeableObject(value))
+		? deepmerge(emptyTarget(value), value, options)
+		: value
+}
+
+function defaultArrayMerge(target, source, options) {
+	return target.concat(source).map(function(element) {
+		return cloneUnlessOtherwiseSpecified(element, options)
+	})
+}
+
+function getMergeFunction(key, options) {
+	if (!options.customMerge) {
+		return deepmerge
+	}
+	var customMerge = options.customMerge(key);
+	return typeof customMerge === 'function' ? customMerge : deepmerge
+}
+
+function getEnumerableOwnPropertySymbols(target) {
+	return Object.getOwnPropertySymbols
+		? Object.getOwnPropertySymbols(target).filter(function(symbol) {
+			return Object.propertyIsEnumerable.call(target, symbol)
+		})
+		: []
+}
+
+function getKeys(target) {
+	return Object.keys(target).concat(getEnumerableOwnPropertySymbols(target))
+}
+
+function propertyIsOnObject(object, property) {
+	try {
+		return property in object
+	} catch(_) {
+		return false
+	}
+}
+
+// Protects from prototype poisoning and unexpected merging up the prototype chain.
+function propertyIsUnsafe(target, key) {
+	return propertyIsOnObject(target, key) // Properties are safe to merge if they don't exist in the target yet,
+		&& !(Object.hasOwnProperty.call(target, key) // unsafe if they exist up the prototype chain,
+			&& Object.propertyIsEnumerable.call(target, key)) // and also unsafe if they're nonenumerable.
+}
+
+function mergeObject(target, source, options) {
+	var destination = {};
+	if (options.isMergeableObject(target)) {
+		getKeys(target).forEach(function(key) {
+			destination[key] = cloneUnlessOtherwiseSpecified(target[key], options);
+		});
+	}
+	getKeys(source).forEach(function(key) {
+		if (propertyIsUnsafe(target, key)) {
+			return
+		}
+
+		if (propertyIsOnObject(target, key) && options.isMergeableObject(source[key])) {
+			destination[key] = getMergeFunction(key, options)(target[key], source[key], options);
+		} else {
+			destination[key] = cloneUnlessOtherwiseSpecified(source[key], options);
+		}
+	});
+	return destination
+}
+
+function deepmerge(target, source, options) {
+	options = options || {};
+	options.arrayMerge = options.arrayMerge || defaultArrayMerge;
+	options.isMergeableObject = options.isMergeableObject || isMergeableObject;
+	// cloneUnlessOtherwiseSpecified is added to `options` so that custom arrayMerge()
+	// implementations can use it. The caller may not replace it.
+	options.cloneUnlessOtherwiseSpecified = cloneUnlessOtherwiseSpecified;
+
+	var sourceIsArray = Array.isArray(source);
+	var targetIsArray = Array.isArray(target);
+	var sourceAndTargetTypesMatch = sourceIsArray === targetIsArray;
+
+	if (!sourceAndTargetTypesMatch) {
+		return cloneUnlessOtherwiseSpecified(source, options)
+	} else if (sourceIsArray) {
+		return options.arrayMerge(target, source, options)
+	} else {
+		return mergeObject(target, source, options)
+	}
+}
+
+deepmerge.all = function deepmergeAll(array, options) {
+	if (!Array.isArray(array)) {
+		throw new Error('first argument should be an array')
+	}
+
+	return array.reduce(function(prev, next) {
+		return deepmerge(prev, next, options)
+	}, {})
+};
+
+var deepmerge_1 = deepmerge;
+
+module.exports = deepmerge_1;
+
+
+/***/ }),
+
 /***/ "./node_modules/events/events.js":
 /*!***************************************!*\
   !*** ./node_modules/events/events.js ***!
@@ -40004,6 +40148,32 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 /***/ }),
 
+/***/ "./server/lib/game-manager-states/states.js":
+/*!**************************************************!*\
+  !*** ./server/lib/game-manager-states/states.js ***!
+  \**************************************************/
+/***/ ((module) => {
+
+/**
+ * Game states.
+ *
+ * See `doc/dev/game-states.md` for a description of the game states.
+ *
+ * @type {{IDLE: string, ROUND_STARTING: string, ROUND_IN_PROGRESS: string, ROUND_COMPLETED: string}}
+ */
+
+const GameManagerStates = {
+  IDLE: 'idle',
+  ROUND_STARTING: 'roundStarting',
+  ROUND_IN_PROGRESS: 'roundInProgress',
+  ROUND_COMPLETED: 'roundCompleted',
+};
+
+module.exports = GameManagerStates;
+
+
+/***/ }),
+
 /***/ "./src/js/lib/adapters/score-counter-adapter.js":
 /*!******************************************************!*\
   !*** ./src/js/lib/adapters/score-counter-adapter.js ***!
@@ -40054,177 +40224,940 @@ module.exports = ScoreCounterAdapter;
 
 /***/ }),
 
-/***/ "./src/js/lib/app/map-app.js":
-/*!***********************************!*\
-  !*** ./src/js/lib/app/map-app.js ***!
-  \***********************************/
+/***/ "./src/js/lib/app/game-server-controller.js":
+/*!**************************************************!*\
+  !*** ./src/js/lib/app/game-server-controller.js ***!
+  \**************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const logger = __webpack_require__(/*! loglevel */ "./node_modules/loglevel/lib/loglevel.js");
+const Character = __webpack_require__(/*! ../model/character */ "./src/js/lib/model/character.js");
+const { ROUND_IN_PROGRESS, ROUND_COMPLETED } = __webpack_require__(/*! ../../../../server/lib/game-manager-states/states */ "./server/lib/game-manager-states/states.js");
+
+class GameServerController {
+  constructor(playerApp, connector) {
+    this.playerApp = playerApp;
+    this.connector = connector;
+    this.syncReceived = false;
+    this.round = null;
+    this.roundState = null;
+    this.sessionActive = false;
+    this.lastReadyTime = 0;
+    this.lastReadyRoundState = null;
+
+    connector.events.on('connect', this.handleConnect.bind(this));
+    connector.events.on('sync', this.handleSync.bind(this));
+
+    this.playerApp.pixiApp.ticker.add(() => {
+      if (this.syncReceived) {
+        connector.sync(this.round, playerApp.pc, playerApp.flags);
+        this.syncReceived = false;
+      }
+    });
+  }
+
+  handleConnect() {
+    this.syncReceived = true;
+  }
+
+  handleSync(message) {
+    this.syncReceived = true;
+
+    // If a new round started
+    if (message.round && message.storyline
+      && (this.round !== message.round || this.playerApp.storylineId !== message.storyline)) {
+      this.handleRoundChanged(message.round, message.storyline);
+    }
+
+    // Move the players
+    Object.entries(message.players).forEach(([id, player]) => {
+      if (id === this.playerApp.playerId) {
+        if (!this.playerApp.hasPc()) {
+          this.handleSessionStarted(player);
+        }
+      }
+      if (id !== this.playerApp.playerId) {
+        if (this.playerApp.remotePcs[id] === undefined) {
+          this.handleRemotePcAdded(id);
+        }
+        if (player.position) {
+          this.playerApp.remotePcs[id].setPosition(player.position.x, player.position.y);
+        }
+        if (player.speed) {
+          this.playerApp.remotePcs[id].setSpeed(player.speed.x, player.speed.y);
+        }
+      }
+    });
+
+    // Remove players that were not included in the sync
+    Object.keys(this.playerApp.remotePcs).forEach((id) => {
+      if (message.players[id] === undefined) {
+        this.handleRemotePcRemoved(id);
+      }
+    });
+
+    // Sync the game state
+    if (message.state) {
+      this.roundState = message.state;
+      this.playerApp.getStateHandler().onRoundState(message.state);
+    }
+
+    // Update the countdown
+    if (message.roundCountdown) {
+      const seconds = Math.ceil(message.roundCountdown / 1000);
+      if (seconds < this.playerApp.roundTimer.getRemainingTime()) {
+        this.playerApp.roundTimer.setRemainingTime(seconds);
+      }
+    }
+
+    // Remove the PC if it was not included in the sync
+    if (this.playerApp.hasPc() && message.players[this.playerApp.playerId] === undefined) {
+      this.handleSessionEnded();
+    }
+
+    if (message.flags) {
+      // Add all the flags from message.flags not present in playerApp.flags.flags
+      Object.keys(message.flags).forEach((flag) => {
+        if (!this.playerApp.flags.exists(flag)) {
+          this.handleFlagSet(flag, message.flags[flag]);
+        }
+      });
+    }
+  }
+
+  handleRoundChanged(round, storyline) {
+    logger.info(`Round changed to ${round} (${storyline})`);
+    if (this.round !== null) {
+      this.playerApp.getStateHandler().onRoundEnd();
+    }
+    this.round = round;
+    this.roundState = null;
+    this.playerApp.setStoryline(storyline);
+    this.playerApp.getStateHandler().onRoundStart();
+  }
+
+  handleSessionStarted(player) {
+    logger.info('RX: session started');
+    this.sessionActive = true;
+    this.playerApp.addPc();
+    this.playerApp.getPc().setPosition(player.position.x, player.position.y);
+    this.playerApp.getStateHandler().onSessionStart();
+  }
+
+  handleSessionEnded() {
+    logger.info('RX: session ended');
+    this.sessionActive = false;
+    this.playerApp.removePc();
+    this.playerApp.getStateHandler().onSessionEnd();
+  }
+
+  handleRemotePcAdded(id) {
+    logger.info(`RX: Remote player added: ${id}`);
+    this.playerApp.remotePcs[id] = new Character(id, this.playerApp.config.players[id]);
+    this.playerApp.gameView.addRemotePcView(this.playerApp.remotePcs[id]);
+  }
+
+  handleRemotePcRemoved(id) {
+    logger.info(`RX: Remote player removed: ${id}`);
+    delete this.playerApp.remotePcs[id];
+    this.playerApp.gameView.removeRemotePcView(id);
+  }
+
+  handleFlagSet(flag, value) {
+    logger.info(`RX: Remote flag set: ${flag} = ${value}`);
+    this.playerApp.flags.set(flag, value, 'remote');
+  }
+
+  startSession() {
+    logger.info(`TX: start session ${this.playerApp.playerId}`);
+    this.connector.addPlayer(this.playerApp.playerId);
+  }
+
+  endSession() {
+    logger.info(`TX: end session ${this.playerApp.playerId}`);
+    this.connector.removePlayer(this.playerApp.playerId);
+  }
+
+  isSessionActive() {
+    return this.sessionActive;
+  }
+
+  playerReady() {
+    // Prevent spamming the server with ready messages
+    // we only send a ready message if the round state has changed since the last ready message,
+    // or if the last ready message was sent more than 1 second ago.
+    const currentTime = Date.now();
+    if ((currentTime - this.lastReadyTime < 1000) && this.lastReadyRoundState === this.roundState) {
+      return;
+    }
+    this.lastReadyTime = currentTime;
+    this.lastReadyRoundState = this.roundState;
+    logger.info(`TX: Player ready ${this.playerApp.playerId} (${this.roundState})`);
+    this.connector.playerReady(this.roundState, this.playerApp.playerId);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  roundEnd() {
+    // Do nothing
+  }
+
+  isRoundInProgress() {
+    return this.roundState === ROUND_IN_PROGRESS;
+  }
+
+  isRoundCompleted() {
+    return this.roundState === ROUND_COMPLETED;
+  }
+}
+
+module.exports = GameServerController;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/app/player-app-states/ending-state.js":
+/*!**********************************************************!*\
+  !*** ./src/js/lib/app/player-app-states/ending-state.js ***!
+  \**********************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const PlayerAppState = __webpack_require__(/*! ./player-app-state */ "./src/js/lib/app/player-app-states/player-app-state.js");
+const { ENDING, RESET } = __webpack_require__(/*! ./states */ "./src/js/lib/app/player-app-states/states.js");
+
+class PlayerAppEndingState extends PlayerAppState {
+  constructor(playerApp) {
+    super(playerApp);
+    this.state = ENDING;
+  }
+
+  onEnter(fromState) {
+    super.onEnter(fromState);
+    this.playerApp.gameView.cameraStop();
+    this.playerApp.inputRouter.routeToMenus(this.playerApp);
+    const [endingText, classes] = this.playerApp.getCurrentEnding();
+    const inclusions = this.playerApp.questTracker.getActiveFlags('inc.');
+    this.playerApp.playerOverlayMgr.showEndingScreen(endingText, classes, inclusions);
+    if (this.playerApp.config?.game?.endingTimeout) {
+      this.playerApp.setStateTimeout(this.playerApp.config.game.endingTimeout * 1000);
+    }
+  }
+
+  onExit() {
+    super.onExit();
+    this.playerApp.playerOverlayMgr.hideEndingScreen();
+  }
+
+  onAction() {
+    super.onAction();
+    // If the ending text has not been revealed, the action button will reveal it.
+    // Otherwise, the player will be allowed to end.
+    if (this.playerApp.playerOverlayMgr?.endingScreen?.revealStarted) {
+      if (!this.playerApp.playerOverlayMgr.endingScreen.isTextRevealed()) {
+        this.playerApp.playerOverlayMgr.endingScreen.revealText();
+      } else {
+        if (this.playerApp.isRoundCompleted()) {
+          this.playerApp.playerReady();
+        }
+        this.playerApp.setState(RESET);
+      }
+    }
+  }
+
+  onTimeout() {
+    super.onTimeout();
+    this.playerApp.setState(RESET);
+  }
+}
+
+module.exports = PlayerAppEndingState;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/app/player-app-states/get-handler.js":
+/*!*********************************************************!*\
+  !*** ./src/js/lib/app/player-app-states/get-handler.js ***!
+  \*********************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const {
+  RESET,
+  IDLE,
+  QUEUED,
+  INTRO,
+  PLAYING,
+  ENDING,
+} = __webpack_require__(/*! ./states */ "./src/js/lib/app/player-app-states/states.js");
+const PlayerAppResetState = __webpack_require__(/*! ./reset-state */ "./src/js/lib/app/player-app-states/reset-state.js");
+const PlayerAppIdleState = __webpack_require__(/*! ./idle-state */ "./src/js/lib/app/player-app-states/idle-state.js");
+const PlayerAppQueuedState = __webpack_require__(/*! ./queued-state */ "./src/js/lib/app/player-app-states/queued-state.js");
+const PlayerAppIntroState = __webpack_require__(/*! ./intro-state */ "./src/js/lib/app/player-app-states/intro-state.js");
+const PlayerAppPlayingState = __webpack_require__(/*! ./playing-state */ "./src/js/lib/app/player-app-states/playing-state.js");
+const PlayerAppEndingState = __webpack_require__(/*! ./ending-state */ "./src/js/lib/app/player-app-states/ending-state.js");
+
+function getHandler(playerApp, state) {
+  switch (state) {
+    case RESET:
+      return new PlayerAppResetState(playerApp);
+    case IDLE:
+      return new PlayerAppIdleState(playerApp);
+    case QUEUED:
+      return new PlayerAppQueuedState(playerApp);
+    case INTRO:
+      return new PlayerAppIntroState(playerApp);
+    case PLAYING:
+      return new PlayerAppPlayingState(playerApp);
+    case ENDING:
+      return new PlayerAppEndingState(playerApp);
+    default:
+      throw new Error(`Invalid state ${state}`);
+  }
+}
+
+module.exports = getHandler;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/app/player-app-states/idle-state.js":
+/*!********************************************************!*\
+  !*** ./src/js/lib/app/player-app-states/idle-state.js ***!
+  \********************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const logger = __webpack_require__(/*! loglevel */ "./node_modules/loglevel/lib/loglevel.js");
+const PlayerAppState = __webpack_require__(/*! ./player-app-state */ "./src/js/lib/app/player-app-states/player-app-state.js");
+const {
+  IDLE, QUEUED, INTRO, ENDING
+} = __webpack_require__(/*! ./states */ "./src/js/lib/app/player-app-states/states.js");
+
+class PlayerAppIdleState extends PlayerAppState {
+  constructor(playerApp) {
+    super(playerApp);
+    this.state = IDLE;
+  }
+
+  onEnter() {
+    super.onEnter();
+    if (this.playerApp.hasPc()) {
+      if (!this.playerApp.isRoundCompleted()) {
+        logger.warn('Entered Idle state with PC. Moving to INTRO state.');
+        this.playerApp.setState(INTRO);
+      } else {
+        logger.warn('Entered Idle state with PC. Moving to ENDING state.');
+        this.playerApp.setState(ENDING);
+      }
+    }
+    this.playerApp.playerOverlayMgr.showTitleScreen();
+    this.playerApp.gameView.cameraFollowDemoDrone();
+    this.playerApp.inputRouter.routeToMenus(this.playerApp);
+  }
+
+  onAction() {
+    super.onAction();
+    this.playerApp.startSession();
+    this.playerApp.setState(QUEUED);
+  }
+
+  onExit() {
+    super.onExit();
+    this.playerApp.playerOverlayMgr.hideTitleScreen();
+  }
+}
+
+module.exports = PlayerAppIdleState;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/app/player-app-states/intro-state.js":
+/*!*********************************************************!*\
+  !*** ./src/js/lib/app/player-app-states/intro-state.js ***!
+  \*********************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const PlayerAppState = __webpack_require__(/*! ./player-app-state */ "./src/js/lib/app/player-app-states/player-app-state.js");
+const {
+  INTRO, PLAYING, ENDING, RESET,
+} = __webpack_require__(/*! ./states */ "./src/js/lib/app/player-app-states/states.js");
+
+class PlayerAppIntroState extends PlayerAppState {
+  constructor(playerApp) {
+    super(playerApp);
+    this.state = INTRO;
+
+    this.pressedToStart = false;
+    this.timedOut = false;
+  }
+
+  onEnter() {
+    super.onEnter();
+    this.playerApp.gameView.cameraStop();
+    this.playerApp.inputRouter.routeToMenus(this.playerApp);
+    const introText = this.playerApp.questTracker.activeStoryline.prompt;
+    const inclusions = this.playerApp.questTracker.getActiveFlags('inc.');
+    this.playerApp.playerOverlayMgr.showIntroScreen(introText, inclusions);
+    if (this.playerApp.config?.game?.introTimeout) {
+      this.playerApp.setStateTimeout(this.playerApp.config.game.introTimeout * 1000);
+    }
+  }
+
+  onExit() {
+    super.onExit();
+    this.playerApp.playerOverlayMgr.hideIntroScreen();
+  }
+
+  onAction() {
+    super.onAction();
+    // If the intro text has not been revealed, the action button will reveal it.
+    // Otherwise, the player will be allowed to start
+    if (this.playerApp.playerOverlayMgr?.introScreen?.revealStarted) {
+      if (!this.playerApp.playerOverlayMgr.introScreen.isTextRevealed()) {
+        this.playerApp.playerOverlayMgr.introScreen.revealText();
+      } else {
+        // Play can begin if the round started and the button has been pressed
+        this.pressedToStart = true;
+        if (this.playerApp.isRoundInProgress()) {
+          this.playerApp.setState(PLAYING);
+        } else {
+          this.playerApp.playerReady();
+        }
+      }
+    }
+  }
+
+  onRoundState(state) {
+    super.onRoundState(state);
+    if (this.playerApp.isRoundCompleted()) {
+      this.playerApp.setState(ENDING);
+      return;
+    }
+    if (this.playerApp.isRoundInProgress() && (this.pressedToStart || this.timedOut)) {
+      this.playerApp.setState(PLAYING);
+    }
+  }
+
+  onSessionEnd() {
+    super.onSessionEnd();
+    this.playerApp.setState(ENDING);
+  }
+
+  onRoundEnd() {
+    super.onRoundEnd();
+    this.playerApp.setState(ENDING);
+  }
+
+  onTimeout() {
+    super.onTimeout();
+    this.timedOut = true;
+    if (this.playerApp.isRoundInProgress()) {
+      this.playerApp.setState(PLAYING);
+    }
+  }
+}
+
+module.exports = PlayerAppIntroState;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/app/player-app-states/player-app-state.js":
+/*!**************************************************************!*\
+  !*** ./src/js/lib/app/player-app-states/player-app-state.js ***!
+  \**************************************************************/
+/***/ ((module) => {
+
+/* eslint-disable class-methods-use-this,no-unused-vars */
+class PlayerAppState {
+  constructor(playerApp) {
+    this.playerApp = playerApp;
+    this.state = null;
+  }
+
+  onEnter(fromState) { }
+
+  onExit(toState) { }
+
+  onRoundState(state) { }
+
+  onSessionStart() { }
+
+  onSessionEnd() { }
+
+  onRoundStart() { }
+
+  onRoundEnd() { }
+
+  onAction() { }
+
+  onTimeout() { }
+}
+
+module.exports = PlayerAppState;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/app/player-app-states/playing-state.js":
+/*!***********************************************************!*\
+  !*** ./src/js/lib/app/player-app-states/playing-state.js ***!
+  \***********************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const PlayerAppState = __webpack_require__(/*! ./player-app-state */ "./src/js/lib/app/player-app-states/player-app-state.js");
+const { PLAYING, ENDING } = __webpack_require__(/*! ./states */ "./src/js/lib/app/player-app-states/states.js");
+
+class PlayerAppPlayingState extends PlayerAppState {
+  constructor(playerApp) {
+    super(playerApp);
+    this.state = PLAYING;
+  }
+
+  onEnter() {
+    super.onEnter();
+    this.playerApp.gameView.cameraFollowPc();
+    this.playerApp.showNpcMoods();
+    this.playerApp.inputRouter.routeToPcMovement(this.playerApp);
+    this.playerApp.roundTimer.start();
+    this.playerApp.playerOverlayMgr.countdown.show();
+    this.playerApp.playerOverlayMgr.showDefaultPrompt();
+  }
+
+  onExit() {
+    super.onExit();
+    this.playerApp.dialogueSequencer.terminate();
+    this.playerApp.hideNpcMoods();
+    this.playerApp.playerOverlayMgr.questOverlay.hide();
+    this.playerApp.playerOverlayMgr.countdown.hide();
+  }
+
+  onRoundState() {
+    super.onRoundState();
+    if (!this.playerApp.isRoundInProgress()) {
+      this.playerApp.setState(ENDING);
+    }
+  }
+
+  onSessionEnd() {
+    super.onSessionEnd();
+    this.playerApp.setState(ENDING);
+  }
+
+  onRoundEnd() {
+    super.onRoundEnd();
+    this.playerApp.setState(ENDING);
+  }
+}
+
+module.exports = PlayerAppPlayingState;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/app/player-app-states/queued-state.js":
+/*!**********************************************************!*\
+  !*** ./src/js/lib/app/player-app-states/queued-state.js ***!
+  \**********************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const PlayerAppState = __webpack_require__(/*! ./player-app-state */ "./src/js/lib/app/player-app-states/player-app-state.js");
+const { QUEUED, INTRO } = __webpack_require__(/*! ./states */ "./src/js/lib/app/player-app-states/states.js");
+
+class PlayerAppQueuedState extends PlayerAppState {
+  constructor(playerApp) {
+    super(playerApp);
+    this.state = QUEUED;
+  }
+
+  onEnter() {
+    super.onEnter();
+    this.playerApp.gameView.cameraStop();
+    this.playerApp.inputRouter.routeToMenus(this.playerApp);
+    if (this.playerApp.isRoundCompleted()) {
+      this.showWaitingToBeginScreen();
+    } else if (this.playerApp.hasPc()) {
+      this.playerApp.setState(INTRO);
+    }
+  }
+
+  onSessionStart() {
+    super.onSessionStart();
+    this.playerApp.setState(INTRO);
+  }
+
+  showWaitingToBeginScreen() {
+    this.playerApp.playerOverlayMgr.showTextScreen(
+      this.playerApp.config.i18n.ui.waitingToBegin
+    );
+  }
+
+  onExit(toState) {
+    super.onExit(toState);
+    this.playerApp.playerOverlayMgr.hideTextScreen();
+  }
+}
+
+module.exports = PlayerAppQueuedState;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/app/player-app-states/reset-state.js":
+/*!*********************************************************!*\
+  !*** ./src/js/lib/app/player-app-states/reset-state.js ***!
+  \*********************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const PlayerAppState = __webpack_require__(/*! ./player-app-state */ "./src/js/lib/app/player-app-states/player-app-state.js");
+const { IDLE, RESET } = __webpack_require__(/*! ./states */ "./src/js/lib/app/player-app-states/states.js");
+
+class PlayerAppResetState extends PlayerAppState {
+  constructor(playerApp) {
+    super(playerApp);
+    this.state = RESET;
+    this.checkedSession = false;
+  }
+
+  onEnter() {
+    super.onEnter();
+    this.showWaitingToEndScreen();
+    this.playerApp.gameView.cameraStop();
+  }
+
+  onExit() {
+    super.onExit();
+    this.playerApp.playerOverlayMgr.hideTextScreen();
+  }
+
+  onSessionStart() {
+    super.onSessionStart();
+    this.playerApp.endSession();
+  }
+
+  onSessionEnd() {
+    super.onSessionEnd();
+    this.playerApp.setState(IDLE);
+  }
+
+  onRoundState(state) {
+    super.onRoundState(state);
+    // On first starting the app, it's possible the server has a stale session.
+    // We wait until this handler is called (which happens on a sync message)
+    // and check whether a session exists. Otherwise, we can proceed to IDLE.
+    if (!this.checkedSession) {
+      this.checkedSession = true;
+      if (this.playerApp.isSessionActive()) {
+        this.playerApp.endSession();
+      } else {
+        this.playerApp.setState(IDLE);
+      }
+    }
+  }
+
+  showWaitingToEndScreen() {
+    this.playerApp.playerOverlayMgr.showTextScreen(
+      this.playerApp.config.i18n.ui.waitingToEnd
+    );
+  }
+}
+
+module.exports = PlayerAppResetState;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/app/player-app-states/states.js":
+/*!****************************************************!*\
+  !*** ./src/js/lib/app/player-app-states/states.js ***!
+  \****************************************************/
+/***/ ((module) => {
+
+const PlayerAppStates = {
+  RESET: 'reset',
+  IDLE: 'idle',
+  QUEUED: 'queued',
+  INTRO: 'intro',
+  PLAYING: 'playing',
+  ENDING: 'ending',
+};
+
+module.exports = PlayerAppStates;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/app/player-app.js":
+/*!**************************************!*\
+  !*** ./src/js/lib/app/player-app.js ***!
+  \**************************************/
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 /* eslint-disable no-console */
 /* globals PIXI */
-
-__webpack_require__(/*! ../helpers-web/fill-with-aspect */ "./src/js/lib/helpers-web/fill-with-aspect.js");
+const logger = __webpack_require__(/*! loglevel */ "./node_modules/loglevel/lib/loglevel.js");
+const PlayerAppStates = __webpack_require__(/*! ./player-app-states/states */ "./src/js/lib/app/player-app-states/states.js");
+const getHandler = __webpack_require__(/*! ./player-app-states/get-handler */ "./src/js/lib/app/player-app-states/get-handler.js");
 const Stats = __webpack_require__(/*! ../helpers-web/stats/stats */ "./src/js/lib/helpers-web/stats/stats.js");
+const GameView = __webpack_require__(/*! ../view-pixi/game-view */ "./src/js/lib/view-pixi/game-view.js");
+__webpack_require__(/*! ../helpers-web/fill-with-aspect */ "./src/js/lib/helpers-web/fill-with-aspect.js");
+const KeyboardInputMgr = __webpack_require__(/*! ../input/keyboard-input-mgr */ "./src/js/lib/input/keyboard-input-mgr.js");
+const GamepadInputMgr = __webpack_require__(/*! ../input/gamepad-input-mgr */ "./src/js/lib/input/gamepad-input-mgr.js");
+const MultiplexInputMgr = __webpack_require__(/*! ../input/multiplex-input-mgr */ "./src/js/lib/input/multiplex-input-mgr.js");
+const PlayerAppInputRouter = __webpack_require__(/*! ../input/player-app-input-router */ "./src/js/lib/input/player-app-input-router.js");
+const Character = __webpack_require__(/*! ../model/character */ "./src/js/lib/model/character.js");
 const FlagStore = __webpack_require__(/*! ../model/flag-store */ "./src/js/lib/model/flag-store.js");
 const QuestTracker = __webpack_require__(/*! ../model/quest-tracker */ "./src/js/lib/model/quest-tracker.js");
-const TownView = __webpack_require__(/*! ../view-pixi/town-view */ "./src/js/lib/view-pixi/town-view.js");
-const PCView = __webpack_require__(/*! ../view-pixi/pc-view */ "./src/js/lib/view-pixi/pc-view.js");
-const CharacterView = __webpack_require__(/*! ../view-pixi/character-view */ "./src/js/lib/view-pixi/character-view.js");
-const Character = __webpack_require__(/*! ../model/character */ "./src/js/lib/model/character.js");
-const KeyboardInputMgr = __webpack_require__(/*! ../input/keyboard-input-mgr */ "./src/js/lib/input/keyboard-input-mgr.js");
-const MapMarker = __webpack_require__(/*! ../view-pixi/map-marker */ "./src/js/lib/view-pixi/map-marker.js");
-const MultiTextScroller = __webpack_require__(/*! ../view-html/multi-text-scroller */ "./src/js/lib/view-html/multi-text-scroller.js");
-const InclusionBar = __webpack_require__(/*! ../view-html/inclusion-bar */ "./src/js/lib/view-html/inclusion-bar.js");
+const PlayerOverlayManager = __webpack_require__(/*! ../view-html/player-overlay-mgr */ "./src/js/lib/view-html/player-overlay-mgr.js");
+const DialogueSequencer = __webpack_require__(/*! ../model/dialogues/dialogue-sequencer */ "./src/js/lib/model/dialogues/dialogue-sequencer.js");
+const RoundTimer = __webpack_require__(/*! ../model/round-timer */ "./src/js/lib/model/round-timer.js");
+const readEnding = __webpack_require__(/*! ../model/dialogues/ending-reader */ "./src/js/lib/model/dialogues/ending-reader.js");
 const Scenery = __webpack_require__(/*! ../model/scenery */ "./src/js/lib/model/scenery.js");
-const SceneryView = __webpack_require__(/*! ../view-pixi/scenery-view */ "./src/js/lib/view-pixi/scenery-view.js");
-const ScoreCounterOverlay = __webpack_require__(/*! ../view-html/score-counter-overlay */ "./src/js/lib/view-html/score-counter-overlay.js");
-const ScoreCounterAdapter = __webpack_require__(/*! ../adapters/score-counter-adapter */ "./src/js/lib/adapters/score-counter-adapter.js");
+const DialogueIteratorContext = __webpack_require__(/*! ../model/dialogues/dialogue-iterator-context */ "./src/js/lib/model/dialogues/dialogue-iterator-context.js");
+const DialogueEffectFactory = __webpack_require__(/*! ../model/dialogues/effects/dialogue-effect-factory */ "./src/js/lib/model/dialogues/effects/dialogue-effect-factory.js");
+__webpack_require__(/*! ../model/dialogues/effects/dialogue-effect-init */ "./src/js/lib/model/dialogues/effects/dialogue-effect-init.js");
+const HintManager = __webpack_require__(/*! ../model/hint-manager */ "./src/js/lib/model/hint-manager.js");
+const { rotateLogLevel } = __webpack_require__(/*! ../helpers/configure-logger */ "./src/js/lib/helpers/configure-logger.js");
 
-class MapApp {
-  constructor(config, textures) {
+
+class PlayerApp {
+  constructor(config, textures, playerId) {
     this.config = config;
     this.textures = textures;
+    this.lang = config.game.defaultLanguage;
+    this.playerId = playerId;
+    this.cacheBuster = Date.now();
 
     // Game logic
     this.storylineId = null;
     this.flags = new FlagStore();
+    this.dialogueIteratorContext = new DialogueIteratorContext(this.flags);
 
     this.questTracker = new QuestTracker(config, this.flags);
-    this.questMarkers = {};
+    this.roundTimer = new RoundTimer(config.game.duration);
+    this.hintManager = new HintManager(config);
 
-    this.questTracker.events.on('storylineChanged', (storylineId) => {
-      this.clearQuestMarkers();
-      this.clearNpcs();
-      this.clearScenery();
-      const storyline = this.config?.storylines?.[storylineId];
-      if (storyline === undefined) {
-        throw new Error(`Error: Attempting to start invalid storyline ${storylineId}`);
-      }
-      this.textScroller.displayText(storyline.prompt);
-      this.textScroller.start();
-      Object.entries(storyline.scenery || {}).forEach(([id, props]) => {
-        this.addScenery(new Scenery(id, props));
-      });
-      this.updateScenery();
-      Object.entries(storyline.npcs).forEach(([id, props]) => {
-        this.addNpc(new Character(id, props));
-      });
-      this.updateNpcs();
-      this.updateQuestMarkers();
-      this.sortScenery();
-    });
+    this.pc = null;
+    this.canControlPc = false;
+    this.remotePcs = {};
 
-    this.questTracker.events.on('questActive', () => {
-      this.updateScenery();
-      this.updateNpcs();
-      this.updateQuestMarkers();
-    });
-    this.questTracker.events.on('questDone', () => {
-      this.updateScenery();
-      this.updateNpcs();
-      this.updateQuestMarkers();
-    });
+    this.npcMoodsVisible = false;
 
-    this.pcs = {};
-    this.pcViews = {};
-    this.npcViews = {};
-    this.sceneryViews = {};
+    this.stateHandler = null;
+    this.gameServerController = null;
 
-    // HTML elements
-    this.$element = $('<div></div>')
-      .addClass('map-app')
-      .addClass(`theme-${config.game.theme ?? 'default'}`);
-
-    this.$pixiWrapper = $('<div></div>')
-      .addClass('pixi-wrapper')
-      .appendTo(this.$element);
-
-    // PIXI
-    this.pixiApp = new PIXI.Application({
-      width: MapApp.APP_WIDTH,
-      height: MapApp.APP_HEIGHT,
-      backgroundColor: 0xffffff,
-    });
-    this.$pixiWrapper.append(this.pixiApp.view);
-
-    this.camera = new PIXI.Container();
-    this.pixiApp.stage.addChild(this.camera);
-    this.townView = new TownView(this.config, this.textures);
-    this.camera.addChild(this.townView.display);
-
-    this.camera.width = MapApp.APP_WIDTH;
-    this.camera.height = MapApp.APP_HEIGHT;
-
-    // HTML Overlays
+    this.playerOverlayMgr = new PlayerOverlayManager(config, this.lang, playerId, this.flags);
+    this.$element = this.playerOverlayMgr.$element;
+    this.$element.addClass(`theme-${config.game.theme ?? 'default'}`);
     this.stats = new Stats();
-    this.$element.append(this.stats.dom);
+    this.playerOverlayMgr.$element.append(this.stats.dom);
 
-    this.textScroller = new MultiTextScroller(config);
-    this.$element.append(this.textScroller.$element);
+    this.dialogueEffectFactory = new DialogueEffectFactory(this);
+    this.dialogueSequencer = new DialogueSequencer(
+      this.dialogueEffectFactory,
+      this.playerOverlayMgr.dialogueOverlay
+    );
 
-    this.inclusionBar = new InclusionBar(config);
-    this.$element.append(this.inclusionBar.$element);
-
-    if (this.config.map.scoreCounter) {
-      const options = this.config.map.scoreCounter;
-      this.scoreCounterOverlay = new ScoreCounterOverlay(
-        this.config,
-        options.categories.map((category) => category.id)
-      );
-      this.$element.append(this.scoreCounterOverlay.$element);
-      this.scoreCounterAdapter = new ScoreCounterAdapter(
-        options,
-        this.flags,
-        this.scoreCounterOverlay
-      );
-    }
-
-    // Input
-    this.keyboardInputMgr = new KeyboardInputMgr();
-    this.keyboardInputMgr.attachListeners();
-
-    if (this.config.game.devModeShortcuts !== false) {
-      this.keyboardInputMgr.addToggle('KeyD', () => {
-        this.stats.togglePanel();
-      });
-      this.keyboardInputMgr.addToggle('KeyF', () => {
-        console.log(this.flags.dump());
-      });
-    }
-
+    // Temporary scoring manager
     this.seenFlags = {};
     this.flags.events.on('flag', (flagId, value, oldValue, setter) => {
       if (this.seenFlags[flagId]) {
         return;
       }
       this.seenFlags[flagId] = true;
-
-      if (flagId.startsWith('inc.')) {
+      // Reset the hint manager when a new flag is set, since setting flags
+      // typically indicates progress
+      this.hintManager.reset();
+      if (flagId.startsWith('pnt.') && setter !== 'remote') {
         const flagParts = flagId.split('.');
         const type = flagParts[1];
         if (type) {
-          this.inclusionBar.add(type);
+          this.playerOverlayMgr.scoringOverlay.showAchievement(type);
         }
       }
 
+      if (flagId.startsWith('inc.') && setter !== 'remote' && setter !== 'init') {
+        const flagParts = flagId.split('.');
+        const type = flagParts[1];
+        if (type) {
+          this.playerOverlayMgr.scoringOverlay.showInclusion(type);
+        }
+      }
       this.updateScenery();
       this.updateNpcs();
-      this.updateQuestMarkers();
     });
+
+    const width = this.config?.game?.playerAppWidth ?? 1024;
+    const height = this.config?.game?.playerAppHeight ?? 768;
+
+    // PIXI
+    this.pixiApp = new PIXI.Application({
+      width,
+      height,
+      backgroundColor: 0xffffff,
+    });
+    this.playerOverlayMgr.$pixiWrapper.append(this.pixiApp.view);
+
+    this.gameView = new GameView(config, textures, this.pixiApp, width, height);
+    this.pixiApp.stage.addChild(this.gameView.getDisplay());
+
+    this.inputMgr = this.createInputMgr();
+    this.inputRouter = new PlayerAppInputRouter(this.inputMgr);
 
     // Game loop
     this.pixiApp.ticker.add((time) => {
       this.stats.frameBegin();
+      this.inputMgr.update();
+      if (this.canControlPc && this.pc) {
+        const { x, y } = this.inputMgr.getDirection();
+        this.pc.setSpeed(x * 10, y * 10);
+      }
 
-      Object.entries(this.pcViews).forEach(([, pcView]) => {
-        pcView.display.position = pcView.character.position;
-        pcView.display.zIndex = pcView.character.position.y;
-        pcView.animate(time);
-      });
-      this.townView.mainLayer.sortChildren();
-
+      this.gameView.animate(time);
       this.stats.frameEnd();
     });
+
+    this.questTracker.events.on('storylineChanged', (storylineId) => {
+      this.gameView.removeAllNpcs();
+      this.gameView.removeAllScenery();
+      const storyline = this.config?.storylines?.[storylineId];
+      if (storyline) {
+        Object.entries(storyline.scenery || {}).forEach(([id, props]) => {
+          this.gameView.addScenery(new Scenery(id, props));
+        });
+        this.updateScenery();
+        Object.entries(storyline.npcs).forEach(([id, props]) => {
+          this.gameView.addNpc(new Character(id, props));
+        });
+        this.updateNpcs();
+        this.updateNpcMoods();
+        this.gameView.resetDroneTargets();
+        this.playerOverlayMgr.decisionLabelI18n.setText(storyline.decision || '');
+        this.gameView.sortScenery();
+      }
+    });
+
+    this.questTracker.events.on('questActive', () => {
+      this.hintManager.reset();
+      this.updateScenery();
+      this.updateNpcs();
+      this.updateNpcMoods();
+    });
+
+    this.questTracker.events.on('questDone', () => {
+      this.hintManager.reset();
+      this.updateScenery();
+      this.updateNpcs();
+      this.updateNpcMoods();
+      this.playerOverlayMgr.markQuestDone();
+    });
+
+    this.questTracker.events.on('stageChanged', (questId, stage, oldStage) => {
+      if (oldStage !== null) {
+        this.playerOverlayMgr.markStageDone();
+      }
+      this.hintManager.reset();
+      this.playerOverlayMgr.showQuestPrompt(
+        this.questTracker.getActiveStagePrompt(),
+        this.questTracker.getActiveStageCounter()
+      );
+      this.gameView.updateTargetArrow(this.questTracker.getActiveStageTarget());
+    });
+
+    this.questTracker.events.on('stageCountChanged', (questId, count) => {
+      this.playerOverlayMgr.setQuestStageCounter(count);
+    });
+
+    this.questTracker.events.on('noQuest', () => {
+      this.playerOverlayMgr.showDefaultPrompt();
+      this.gameView.updateTargetArrow(null);
+    });
+
+    this.questTracker.events.on('hintLevelChanged', () => {
+      const activePrompt = this.questTracker.getActiveStagePrompt();
+      if (activePrompt) {
+        this.playerOverlayMgr.changeQuestPromptText(activePrompt);
+        this.gameView.updateTargetArrow(this.questTracker.getActiveStageTarget());
+      }
+    });
+
+    this.hintManager.events.on('hintNeeded', () => {
+      this.questTracker.incHintLevel();
+    });
+
+    this.roundTimer.events.on('update', (timeLeft) => {
+      this.playerOverlayMgr.countdown.set(timeLeft);
+    });
+
+    this.roundTimer.events.on('end', () => {
+      this.gameServerController.roundEnd();
+    });
+  }
+
+  refresh() {
+    this.playerOverlayMgr.refresh();
+  }
+
+  createInputMgr() {
+    const keyboardInputMgr = new KeyboardInputMgr();
+    keyboardInputMgr.attachListeners();
+    if (this.config.game.devModeShortcuts !== false
+      || this.config.game.userModeShortcuts !== false) {
+      keyboardInputMgr.addToggle('KeyE', () => {
+        this.gameServerController.roundEnd();
+      });
+
+      keyboardInputMgr.addToggle('KeyT', () => {
+        this.questTracker.incHintLevel();
+      });
+    }
+    if (this.config.game.devModeShortcuts !== false) {
+      keyboardInputMgr.addToggle('KeyD', () => {
+        this.stats.togglePanel();
+      });
+      keyboardInputMgr.addToggle('KeyF', () => {
+        console.log(this.flags.dump());
+      });
+      keyboardInputMgr.addToggle('KeyH', () => {
+        this.gameView.toggleHitboxDisplay();
+      });
+      keyboardInputMgr.addToggle('KeyC', () => {
+        rotateLogLevel();
+      });
+      keyboardInputMgr.addToggle('KeyS', () => {
+        this.gameView.toggleSceneryTransparency();
+      });
+      keyboardInputMgr.addToggle('KeyX', () => {
+        if (this.pc) {
+          console.log(`x: ${this.pc.position.x}, y: ${this.pc.position.y}`);
+        } else {
+          console.log('No PC');
+        }
+      });
+    }
+
+    const playerConfig = this.config?.players?.[this.playerId];
+    const gamepadInputMgr = new GamepadInputMgr(
+      playerConfig?.gamepadMapping ?? {},
+      playerConfig?.gamepad ?? null
+    );
+    gamepadInputMgr.attachListeners();
+
+    const multiplexInputMgr = new MultiplexInputMgr(
+      keyboardInputMgr,
+      gamepadInputMgr
+    );
+    multiplexInputMgr.attachListeners();
+
+    const inputMgr = multiplexInputMgr;
+    inputMgr.events.on('lang', () => {
+      this.toggleLanguage();
+    });
+
+    return inputMgr;
+  }
+
+  setGameServerController(gameServerController) {
+    this.gameServerController = gameServerController;
   }
 
   setStoryline(storylineId) {
@@ -40233,99 +41166,226 @@ class MapApp {
   }
 
   resetGameState() {
-    this.seenFlags = {};
-    this.inclusionBar.clear();
     this.questTracker.setActiveStoryline(this.storylineId);
+    this.dialogueIteratorContext.clearState();
+    this.seenFlags = {};
   }
 
-  resize() {
-    this.$element.fillWithAspect(MapApp.APP_WIDTH / MapApp.APP_HEIGHT);
-    this.$element.css('font-size', `${(this.$element.width() * MapApp.FONT_RATIO).toFixed(3)}px`);
+  getState() {
+    return (this.stateHandler && this.stateHandler.state) || null;
   }
 
-  addPc(id) {
-    const pc = new Character(id, this.config.players[id]);
-    this.pcs[id] = pc;
-
-    const view = new PCView(this.config, this.textures, pc, this.townView);
-    this.pcViews[id] = view;
-    this.townView.mainLayer.addChild(view.display);
-
-    this.addMarker(view, `player-${id}`);
+  getStateHandler() {
+    return this.stateHandler ?? null;
   }
 
-  removePc(id) {
-    if (this.pcViews[id]) {
-      this.townView.mainLayer.removeChild(this.pcViews[id].display);
-      delete this.pcs[id];
-      delete this.pcViews[id];
+  setState(state) {
+    // Check if the state is in PlayerApp.States
+    if (Object.values(PlayerAppStates).indexOf(state) === -1) {
+      throw new Error(`Error: Attempting to set invalid state ${state}`);
+    }
+
+    if (this.stateHandler && this.stateHandler.state === state) {
+      return;
+    }
+
+    this.clearStateTimeout();
+    const fromState = this.getState();
+    const newHandler = getHandler(this, state);
+
+    if (this.stateHandler) {
+      this.stateHandler.onExit(state);
+    }
+    logger.info(`State change: ${fromState} -> ${state}`);
+    this.stateHandler = newHandler;
+    if (this.stateHandler) {
+      this.stateHandler.onEnter(fromState);
     }
   }
 
-  addNpc(npc) {
-    const view = new CharacterView(this.config, this.textures, npc, this.townView);
-    if (npc.cond) {
-      view.hide(false);
-    }
-    this.npcViews[npc.id] = view;
-    this.townView.mainLayer.addChild(view.display);
+  setStateTimeout(duration) {
+    this.stateTimeout = setTimeout(() => {
+      logger.info(`State '${this.stateHandler.state}' timeout after ${duration}ms`);
+      this.stateHandler.onTimeout();
+    }, duration);
   }
 
-  removeNpc(id) {
-    if (this.npcViews[id]) {
-      this.townView.mainLayer.removeChild(this.npcViews[id].display);
-      delete this.npcViews[id];
+  clearStateTimeout() {
+    if (this.stateTimeout) {
+      clearTimeout(this.stateTimeout);
+      this.stateTimeout = null;
     }
   }
 
-  clearNpcs() {
-    Object.values(this.npcViews).forEach((npcView) => {
-      this.townView.mainLayer.removeChild(npcView.display);
+  isRoundInProgress() {
+    return this.gameServerController?.isRoundInProgress() ?? false;
+  }
+
+  isRoundCompleted() {
+    return this.gameServerController?.isRoundCompleted() ?? false;
+  }
+
+  setLanguage(lang) {
+    logger.info(`Setting language to ${lang}`);
+    this.lang = lang;
+    this.playerOverlayMgr.setLang(lang);
+  }
+
+  toggleLanguage() {
+    const langIndex = this.config.game.languages.indexOf(this.lang);
+    if (langIndex === this.config.game.languages.length - 1) {
+      this.setLanguage(this.config.game.languages[0]);
+    } else {
+      this.setLanguage(this.config.game.languages[langIndex + 1]);
+    }
+  }
+
+  addPc() {
+    logger.info(`Adding PC (id=${this.playerId})`);
+    this.pc = new Character(this.playerId, this.config.players[this.playerId]);
+    this.gameView.addPc(this.pc);
+    this.gameView.cameraFollowPc();
+  }
+
+  removePc() {
+    logger.info('Removing PC');
+    this.gameView.cameraStop();
+    this.gameView.removePc();
+    this.pc = null;
+  }
+
+  hasPc() {
+    return this.pc !== null;
+  }
+
+  getPc() {
+    return this.pc;
+  }
+
+  enablePcControl() {
+    this.canControlPc = true;
+  }
+
+  disablePcControl() {
+    this.canControlPc = false;
+    if (this.pc) {
+      this.pc.setSpeed(0, 0);
+    }
+  }
+
+  getDialogueContext() {
+    return this.dialogueIteratorContext;
+  }
+
+  playDialogue(dialogue, npc = null) {
+    this.gameView.hideDistractions();
+    this.gameView.cameraUsePreset('dialogue');
+    this.inputRouter.routeToDialogueOverlay(
+      this.playerOverlayMgr.dialogueOverlay,
+      this.dialogueSequencer
+    );
+    const title = npc ? npc.name : null;
+    let hintManagerReset = false;
+    this.hintManager.events.once('reset', () => {
+      hintManagerReset = true;
     });
-    this.npcViews = {};
-  }
-
-  addScenery(scenery) {
-    const view = new SceneryView(this.config, this.textures, scenery, this.townView);
-    if (scenery.cond) {
-      view.hide(false);
-    }
-    this.townView.addView(view.display, scenery.layer);
-    this.sceneryViews[scenery.id] = view;
-  }
-
-  removeScenery(id) {
-    if (this.sceneryViews[id]) {
-      this.townView.mainLayer.removeChild(this.sceneryViews[id].display);
-      delete this.sceneryViews[id];
-    }
-  }
-
-  clearScenery() {
-    Object.values(this.sceneryViews).forEach((sceneryView) => {
-      this.townView.mainLayer.removeChild(sceneryView.display);
+    this.dialogueSequencer.play(dialogue, this.getDialogueContext(), { top: title });
+    this.dialogueSequencer.events.once('end', () => {
+      this.inputRouter.routeToNone();
+      // Add a delay to avoid accidental re-triggering of the dialogue
+      setTimeout(() => {
+        // Check that the input router was not re-routed during the delay
+        // (e.g. game finishing)
+        if (!this.inputRouter.isRouted()) {
+          this.inputRouter.routeToPcMovement(this);
+        }
+      }, 500);
+      this.gameView.cameraUsePreset('walking');
+      this.gameView.showDistractions();
+      if (!hintManagerReset) {
+        // We only count the dialogues in which the hint manager was not reset
+        this.hintManager.handleDialogue(npc.id);
+      }
     });
-    this.sceneryViews = [];
   }
 
-  sortScenery() {
-    // Sort layers where scenery can go. The main layer is sorted in the main loop.
-    this.townView.sortViews('back');
-    this.townView.sortViews('front');
-  }
-
-  ensureSceneryVisible(id) {
-    const view = this.sceneryViews[id];
-    if (view && !view.isVisible()) {
-      view.show();
+  pcAction() {
+    const pcView = this.gameView.getPcView();
+    if (!pcView) {
+      return;
+    }
+    this.gameView.handlePcAction();
+    const hitbox = pcView.getActionHitbox();
+    const npcs = this.gameView.getNpcViewsInRect(hitbox)
+      .filter((npcView) => npcView.isVisible())
+      .map((view) => view.character);
+    let closestNpc = null;
+    let closestDistance = null;
+    npcs.forEach((npc) => {
+      const distance = Math.max(
+        Math.abs(this.pc.position.x - npc.position.x),
+        Math.abs(this.pc.position.y - npc.position.y)
+      );
+      if (closestDistance === null || distance < closestDistance) {
+        closestNpc = npc;
+        closestDistance = distance;
+      }
+    });
+    if (closestNpc) {
+      this.playDialogue(this.questTracker.getNpcDialogue(closestNpc.id), closestNpc);
     }
   }
 
-  ensureSceneryHidden(id) {
-    const view = this.sceneryViews[id];
-    if (view && view.isVisible()) {
-      view.hide();
+  menuAction() {
+    this.stateHandler.onAction();
+  }
+
+  startSession() {
+    if (this.gameServerController) {
+      this.gameServerController.startSession();
     }
+  }
+
+  endSession() {
+    if (this.gameServerController) {
+      this.gameServerController.endSession();
+    }
+  }
+
+  isSessionActive() {
+    return this.gameServerController?.isSessionActive() ?? false;
+  }
+
+  playerReady() {
+    if (this.gameServerController) {
+      this.gameServerController.playerReady();
+    }
+  }
+
+  updateNpcMoods() {
+    const npcsWithQuests = this.questTracker.getNpcsWithQuests();
+    const canSwitchQuests = this.config.game.canSwitchQuests !== undefined
+      ? this.config.game.canSwitchQuests : true;
+    const showMoods = this.npcMoodsVisible
+      && (!this.questTracker.hasActiveQuest() || canSwitchQuests)
+      && Object.keys(npcsWithQuests).length > 0;
+    this.gameView.getAllNpcViews().forEach((npcView) => {
+      if (showMoods && Object.keys(npcsWithQuests).includes(npcView.character.id)) {
+        npcView.showMoodBalloon(npcsWithQuests[npcView.character.id]);
+      } else {
+        npcView.hideMoodBalloon();
+      }
+    });
+  }
+
+  hideNpcMoods() {
+    this.npcMoodsVisible = false;
+    this.updateNpcMoods();
+  }
+
+  showNpcMoods() {
+    this.npcMoodsVisible = true;
+    this.updateNpcMoods();
   }
 
   updateScenery() {
@@ -40335,26 +41395,12 @@ class MapApp {
       if (props.cond) {
         const conditionMet = this.questTracker.isConditionMet(props.cond);
         if (conditionMet) {
-          this.ensureSceneryVisible(id);
+          this.gameView.ensureSceneryVisible(id);
         } else {
-          this.ensureSceneryHidden(id);
+          this.gameView.ensureSceneryHidden(id);
         }
       }
     });
-  }
-
-  ensureNpcHidden(id) {
-    const view = this.npcViews[id];
-    if (view && view.isVisible()) {
-      view.hide();
-    }
-  }
-
-  ensureNpcVisible(id) {
-    const view = this.npcViews[id];
-    if (view && !view.isVisible()) {
-      view.show();
-    }
   }
 
   updateNpcs() {
@@ -40364,82 +41410,29 @@ class MapApp {
       if (props.cond) {
         const conditionMet = this.questTracker.isConditionMet(props.cond);
         if (conditionMet) {
-          this.ensureNpcVisible(id);
+          this.gameView.ensureNpcVisible(id);
         } else {
-          this.ensureNpcHidden(id);
+          this.gameView.ensureNpcHidden(id);
         }
       }
     });
   }
 
-  addMarker(character, icon) {
-    const marker = new MapMarker(
-      this.textures['map-markers'].textures['pin-marker'],
-      this.textures.icons.textures[`icon-${icon}`],
-      { x: 0.5, y: 1 }
+  getCurrentEnding() {
+    return readEnding(
+      this.questTracker.getEndingDialogue(),
+      this.getDialogueContext()
     );
-    marker.setScale(this.townView.display.width / MapApp.APP_WIDTH);
-    character.addAttachment('map-marker', marker);
-    marker.setPosition(0, -character.display.height);
-    marker.popper.show();
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  removeMarker(character, onComplete = () => {}) {
-    const marker = character.getAttachment('map-marker');
-    if (marker) {
-      marker.hide(() => {
-        character.removeAttachment('map-marker');
-        onComplete();
-      });
-    } else {
-      onComplete();
-    }
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  destroyMarker(character) {
-    const marker = character.getAttachment('map-marker');
-    if (marker) {
-      marker.destroy();
-      character.removeAttachment('map-marker');
-    }
-  }
-
-  updateQuestMarkers() {
-    const npcsWithQuests = this.questTracker.getNpcsWithQuests();
-    Object.values(this.npcViews).forEach((npcView) => {
-      const npcId = npcView.character.id;
-      if (Object.keys(npcsWithQuests).includes(npcId)) {
-        const questIcon = npcsWithQuests[npcView.character.id];
-        if (this.questMarkers[npcId] === undefined) {
-          this.addMarker(npcView, questIcon);
-        } else if (this.questMarkers[npcId] !== questIcon) {
-          this.removeMarker(npcView, () => {
-            this.addMarker(npcView, questIcon);
-          });
-        }
-        this.questMarkers[npcId] = questIcon;
-      } else if (this.questMarkers[npcId]) {
-        delete this.questMarkers[npcId];
-        this.removeMarker(npcView);
-      }
-    });
-  }
-
-  clearQuestMarkers() {
-    Object.values(this.npcViews).forEach((npcView) => {
-      this.destroyMarker(npcView);
-    });
-    this.questMarkers = {};
+  getStorylineImageUrl(filename) {
+    const imagePath = this.config.game.storylineImagePaths.replace('%storyline%', this.storylineId);
+    const ensureSlash = imagePath.charAt(imagePath.length - 1) !== '/' ? '/' : '';
+    return `${imagePath}${ensureSlash}${filename}?t=${this.cacheBuster}`;
   }
 }
 
-MapApp.APP_WIDTH = 1920;
-MapApp.APP_HEIGHT = 1080;
-MapApp.FONT_RATIO = 0.0175; // 1.75% of the width of the app
-
-module.exports = MapApp;
+module.exports = PlayerApp;
 
 
 /***/ }),
@@ -40753,6 +41746,62 @@ module.exports = PixiTween;
     return this;
   };
 }(jQuery));
+
+
+/***/ }),
+
+/***/ "./src/js/lib/helpers-web/fit-parent.js":
+/*!**********************************************!*\
+  !*** ./src/js/lib/helpers-web/fit-parent.js ***!
+  \**********************************************/
+/***/ ((module) => {
+
+function fitParentWidth($element) {
+  // Add a css transform to the element to fit the width of its parent
+  const parentWidth = $element.parent().width();
+  const elementWidth = $element.width();
+  const scale = parentWidth / elementWidth;
+  if (scale < 1) {
+    $element.css('transform', `scale(${scale})`);
+  } else {
+    $element.css('transform', '');
+  }
+}
+
+module.exports = {
+  fitParentWidth,
+};
+
+
+/***/ }),
+
+/***/ "./src/js/lib/helpers-web/img-preload.js":
+/*!***********************************************!*\
+  !*** ./src/js/lib/helpers-web/img-preload.js ***!
+  \***********************************************/
+/***/ ((module) => {
+
+async function imgPreload(src, timeout = null) {
+  let timeoutTimer = null;
+  return new Promise((resolve, reject) => {
+    if (timeout) {
+      timeoutTimer = setTimeout(() => {
+        resolve();
+      }, timeout);
+    }
+    const img = new Image();
+    img.onload = () => {
+      clearTimeout(timeoutTimer);
+      resolve();
+    };
+    img.onerror = (err) => {
+      reject(err);
+    };
+    img.src = src;
+  });
+}
+
+module.exports = imgPreload;
 
 
 /***/ }),
@@ -41083,6 +42132,195 @@ module.exports = {
 
 /***/ }),
 
+/***/ "./src/js/lib/helpers/emoji-utils.js":
+/*!*******************************************!*\
+  !*** ./src/js/lib/helpers/emoji-utils.js ***!
+  \*******************************************/
+/***/ ((module) => {
+
+const EMOJI_REGEX_PATTERN = ':[a-z0-9_+-]+:';
+
+/**
+ * Tokenize a string of text, splitting it into an array of strings and emoji tokens.
+ *
+ * @param {string} text
+ * @returns {Array<string>}
+ */
+function tokenizeEmoji(text) {
+  return text.split(new RegExp(`(${EMOJI_REGEX_PATTERN})`, 'gi'));
+}
+
+/**
+ * Check if a token is an emoji.
+ *
+ * @param {string} token
+ * @returns {boolean}
+ */
+function isEmoji(token) {
+  return token.match(new RegExp(`^${EMOJI_REGEX_PATTERN}$`, 'i')) !== null;
+}
+
+/**
+ * Get the CSS class for an emoji token.
+ *
+ * @param {string} token
+ * @returns {string}
+ */
+function getEmojiClass(token) {
+  return token.replace(/:/g, '');
+}
+
+/**
+ * Convert a string that contains emojis into an array of lines for use with the SpeechText class
+ *
+ * @param {string} text
+ * @returns {Array<object>}
+ */
+function textWithEmojisToSpeechLines(text) {
+  const tokens = tokenizeEmoji(text);
+  return tokens.map((token) => {
+    if (isEmoji(token)) {
+      return {
+        string: token,
+        preClasses: ['emoji', `emoji-${getEmojiClass(token)}`],
+        noSplit: true,
+      };
+    }
+    return {
+      string: token,
+    };
+  });
+}
+
+/**
+ * Convert a text with :emojis: into HTML with spans for each emoji
+ */
+function textWithEmojisToHtml(text) {
+  const tokens = tokenizeEmoji(text);
+  return tokens.map((token) => {
+    if (isEmoji(token)) {
+      return `<span class="emoji emoji-${getEmojiClass(token)}">${token}</span>`;
+    }
+    return token;
+  }).join('');
+}
+
+module.exports = {
+  tokenizeEmoji,
+  isEmoji,
+  textWithEmojisToSpeechLines,
+  textWithEmojisToHtml,
+};
+
+
+/***/ }),
+
+/***/ "./src/js/lib/helpers/i18n.js":
+/*!************************************!*\
+  !*** ./src/js/lib/helpers/i18n.js ***!
+  \************************************/
+/***/ ((module) => {
+
+function getText(text, lang = null) {
+  if (lang !== null && typeof text === 'object') {
+    return text[lang];
+  }
+  return text;
+}
+
+/**
+ * Given an array of texts (objects with language keys), merge them into a single object with the
+ * same keys. If any text is a simple string instead of an object, it is merged into all languages.
+ * If all texts are strings, a single string is returned.
+ *
+ * @param {Array} texts
+ * @param {Object} userOptions
+ *   - {string} separator - If set, the texts are joined with this separator
+ *   - {string} prefix - If set, the texts are prefixed with this string
+ *   - {string} suffix - If set, the texts are suffixed with this string
+ * @returns {string|Object}
+ */
+function mergeTexts(texts, userOptions = {}) {
+  const result = {};
+  const defaultOptions = {
+    separator: '',
+    prefix: '',
+    suffix: '',
+  };
+  const options = { ...defaultOptions, ...userOptions };
+  let allStrings = true;
+  texts.forEach((text) => {
+    if (typeof text === 'object') {
+      allStrings = false;
+      Object.keys(text).forEach((lang) => {
+        result[lang] = '';
+      });
+    }
+  });
+
+  if (allStrings) {
+    return texts.map((t) => `${options.prefix}${t}${options.suffix}`).join(options.separator);
+  }
+
+  texts.forEach((text, i) => {
+    let part;
+    Object.keys(result).forEach((lang) => {
+      if (typeof text === 'string') {
+        part = text;
+      } else if (text[lang] !== undefined) {
+        part = text[lang];
+      } else {
+        part = '';
+      }
+      result[lang] += `${options.prefix}${part}${options.suffix}`;
+      if (i < texts.length - 1) {
+        result[lang] += options.separator;
+      }
+    });
+  });
+
+  return result;
+}
+
+class I18nTextAdapter {
+  constructor(setTextCallback, lang, text = null) {
+    this.setTextCallback = setTextCallback;
+    this.currentLang = lang;
+    this.currentText = text;
+
+    this.update();
+  }
+
+  update() {
+    if (this.currentText !== null) {
+      this.setTextCallback(getText(this.currentText, this.currentLang));
+    }
+  }
+
+  setText(text, forceUpdate = false) {
+    if (forceUpdate || JSON.stringify(text) !== JSON.stringify(this.currentText)) {
+      this.currentText = text;
+      this.update();
+    }
+  }
+
+  setLang(lang) {
+    if (lang !== this.currentLang) {
+      this.currentLang = lang;
+      this.update();
+    }
+  }
+}
+
+module.exports = {
+  getText,
+  mergeTexts,
+  I18nTextAdapter,
+};
+
+
+/***/ }),
+
 /***/ "./src/js/lib/helpers/sentry.js":
 /*!**************************************!*\
   !*** ./src/js/lib/helpers/sentry.js ***!
@@ -41112,6 +42350,418 @@ function initSentry(sentryDSN) {
 }
 
 module.exports = { initSentry };
+
+
+/***/ }),
+
+/***/ "./src/js/lib/helpers/shuffle.js":
+/*!***************************************!*\
+  !*** ./src/js/lib/helpers/shuffle.js ***!
+  \***************************************/
+/***/ ((module) => {
+
+function shuffleArray(array) {
+  // Fisher–Yates shuffle
+  for (let i = array.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+module.exports = { shuffleArray };
+
+
+/***/ }),
+
+/***/ "./src/js/lib/input/connections/dialogue-overlay.js":
+/*!**********************************************************!*\
+  !*** ./src/js/lib/input/connections/dialogue-overlay.js ***!
+  \**********************************************************/
+/***/ ((module) => {
+
+class DialogueOverlayConnection {
+  constructor(inputManager, dialogueOverlay, dialogueSequencer) {
+    this.inputManager = inputManager;
+    this.dialogueOverlay = dialogueOverlay;
+    this.dialogueSequencer = dialogueSequencer;
+
+    this.handleUp = this.handleUp.bind(this);
+    this.handleDown = this.handleDown.bind(this);
+    this.handleAction = this.handleAction.bind(this);
+  }
+
+  route() {
+    this.inputManager.events.on('down', this.handleDown);
+    this.inputManager.events.on('up', this.handleUp);
+    this.inputManager.events.on('action', this.handleAction);
+  }
+
+  unroute() {
+    this.inputManager.events.off('down', this.handleDown);
+    this.inputManager.events.off('up', this.handleUp);
+    this.inputManager.events.off('action', this.handleAction);
+  }
+
+  handleDown() {
+    this.dialogueOverlay.selectNextResponseOption();
+  }
+
+  handleUp() {
+    this.dialogueOverlay.selectPreviousResponseOption();
+  }
+
+  handleAction() {
+    this.dialogueSequencer.action();
+  }
+}
+
+module.exports = DialogueOverlayConnection;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/input/connections/menu.js":
+/*!**********************************************!*\
+  !*** ./src/js/lib/input/connections/menu.js ***!
+  \**********************************************/
+/***/ ((module) => {
+
+class MenuConnection {
+  constructor(inputManager, playerApp) {
+    this.inputManager = inputManager;
+    this.playerApp = playerApp;
+    this.handleAction = this.handleAction.bind(this);
+  }
+
+  route() {
+    this.inputManager.events.on('action', this.handleAction);
+  }
+
+  unroute() {
+    this.inputManager.events.off('action', this.handleAction);
+  }
+
+  handleAction() {
+    this.playerApp.menuAction();
+  }
+}
+
+module.exports = MenuConnection;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/input/connections/pc-movement.js":
+/*!*****************************************************!*\
+  !*** ./src/js/lib/input/connections/pc-movement.js ***!
+  \*****************************************************/
+/***/ ((module) => {
+
+class PcMovementConnection {
+  constructor(inputManager, playerApp) {
+    this.inputManager = inputManager;
+    this.playerApp = playerApp;
+    this.handleAction = this.handleAction.bind(this);
+  }
+
+  route() {
+    this.playerApp.enablePcControl();
+    this.inputManager.events.on('action', this.handleAction);
+  }
+
+  unroute() {
+    this.playerApp.disablePcControl();
+    this.inputManager.events.off('action', this.handleAction);
+  }
+
+  handleAction() {
+    this.playerApp.pcAction();
+  }
+}
+
+module.exports = PcMovementConnection;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/input/gamepad-input-mgr.js":
+/*!***********************************************!*\
+  !*** ./src/js/lib/input/gamepad-input-mgr.js ***!
+  \***********************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const logger = __webpack_require__(/*! loglevel */ "./node_modules/loglevel/lib/loglevel.js");
+const deepmerge = __webpack_require__(/*! deepmerge */ "./node_modules/deepmerge/dist/cjs.js");
+const InputMgr = __webpack_require__(/*! ./input-mgr */ "./src/js/lib/input/input-mgr.js");
+const GamepadMapper = __webpack_require__(/*! ./gamepad-mapper */ "./src/js/lib/input/gamepad-mapper.js");
+
+/**
+ * @typedef {
+ *  horizontal: number,
+ *  vertical: number,
+ *  invertHorizontal: boolean,
+ *  invertVertical: boolean
+*  } GamepadMapperAxesConfig
+ */
+
+/**
+ * @typedef {
+ *  {axes?:GamepadMapperAxesConfig,buttons?:{InputMgrEventNames:number}}
+ * } GamepadMapperConfig
+ */
+
+/**
+ * Selects which gamepad to use.
+ *
+ * - null: the first connected gamepad.
+ * - integer: the gamepad whose Gamepad.index matches.
+ * - string: the gamepad whose Gamepad.id matches.
+ *
+ * @typedef {number|string|null} GamepadSelector
+ */
+
+/**
+ * Gamepad configuration for standard gamepads.
+ *
+ * @type {GamepadMapperConfig}
+ */
+const standardMapperConfig = {
+  axes: {
+    horizontal: 0,
+    vertical: 1,
+    invertHorizontal: false,
+    invertVertical: false,
+  },
+  buttons: {
+    up: 12,
+    down: 13,
+    left: 14,
+    right: 15,
+    action: 1,
+    lang: 9,
+  },
+};
+
+/**
+ * Handles gamepad and joystick input from a single device.
+ *
+ * The device is chosen by a {@link GamepadSelector}. By default it is the
+ * first available device.
+ *
+ * @augments InputMgr
+ */
+class GamepadInputMgr extends InputMgr {
+  /**
+   * @param {GamepadMapperConfig} [mapperConfig]
+   * @param {GamepadSelector} [gamepadSelector]
+   *  Which gamepad to use (see {@link GamepadSelector}). Defaults to the first
+   *  connected gamepad.
+   */
+  constructor(mapperConfig = {}, gamepadSelector = null) {
+    super();
+    logger.info(
+      mapperConfig,
+      deepmerge(standardMapperConfig, mapperConfig ?? {})
+    );
+    this.mapper = new GamepadMapper(
+      deepmerge(standardMapperConfig, mapperConfig ?? {})
+    );
+    this.gamepadSelector = gamepadSelector ?? null;
+    if (this.gamepadSelector !== null
+      && !Number.isInteger(this.gamepadSelector)
+      && typeof this.gamepadSelector !== 'string') {
+      logger.warn(`Invalid gamepad selector ${JSON.stringify(this.gamepadSelector)}. It must be an integer (index) or a string (id).`);
+    }
+    this.gamepadIndex = -1;
+    this.handleGamepadDisConnected = () => {
+      const gamepad = this.findConfiguredGamepad();
+      if (typeof gamepad !== 'undefined') {
+        logger.info(`Using gamepad ${gamepad.index}: ${gamepad.id}`);
+        this.gamepadIndex = gamepad.index;
+      } else {
+        if (this.gamepadSelector === null) {
+          logger.info('No gamepad connected');
+        } else {
+          logger.info(`Configured gamepad ${JSON.stringify(this.gamepadSelector)} not found`);
+        }
+        this.gamepadIndex = -1;
+      }
+    };
+  }
+
+  /**
+   * Finds the connected gamepad that matches the configured selector.
+   *
+   * @returns {Gamepad|undefined}
+   *  The matching gamepad, or undefined if none matches.
+   */
+  findConfiguredGamepad() {
+    const gamepads = navigator.getGamepads().filter((g) => g !== null);
+    const selector = this.gamepadSelector;
+    if (selector === null) {
+      return gamepads[0];
+    }
+    if (Number.isInteger(selector)) {
+      return gamepads.find((g) => g.index === selector);
+    }
+    if (typeof selector === 'string') {
+      return gamepads.find((g) => g.id === selector);
+    }
+    return undefined;
+  }
+
+  attachListeners() {
+    if (this.isListening()) return;
+
+    // Connect to the first of the already connected gamepads, if any.
+    this.handleGamepadDisConnected();
+
+    // Attach listeners to handle future connects and disconnects.
+    window.addEventListener('gamepadconnected', this.handleGamepadDisConnected);
+    window.addEventListener(
+      'gamepaddisconnected',
+      this.handleGamepadDisConnected
+    );
+    super.attachListeners();
+    /**
+     * TODO: Deal with SecurityError from missing gamepad permission.
+     * TODO: Deal [missing secure context](https://github.com/w3c/gamepad/pull/120).
+     * TODO: Handle browsers that don't support gamepads.
+     * TODO: Emit warning when Gamepad API can not be used due the above reasons.
+     */
+  }
+
+  detachListeners() {
+    if (!this.isListening()) return;
+    window.removeEventListener(
+      'gamepaddisconnected',
+      this.handleGamepadDisConnected
+    );
+    this.hasListenersAttached = false;
+    this.gamepadIndex = -1;
+    super.detachListeners();
+  }
+
+  updateState() {
+    const gamepad = navigator.getGamepads()[this.gamepadIndex] ?? null;
+    if (gamepad !== null && gamepad.connected) {
+      const newState = this.mapper.grab(gamepad);
+      Object.assign(this.state, newState);
+    }
+  }
+}
+
+module.exports = GamepadInputMgr;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/input/gamepad-mapper.js":
+/*!********************************************!*\
+  !*** ./src/js/lib/input/gamepad-mapper.js ***!
+  \********************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const InputMgr = __webpack_require__(/*! ./input-mgr */ "./src/js/lib/input/input-mgr.js");
+
+/**
+ * Maps gamepad and joystick input to events.
+ *
+ * Different gamepads and joysticks have different mappings of buttons and axes.
+ * This class maps the input to the standard representation corresponding to the events emitted by
+ * {@link GamepadInputMgr.events}.
+ */
+class GamepadMapper {
+  /**
+   * Initilize the mapper with a configuration.
+   *
+   * @param {GamepadMapperConfig} config The configuration for mapping button pressed
+   *    and movement along axis to event names. If the same event name is mapped to an axis and a
+   *    button, the axis takes precedence.
+   */
+  constructor(config) {
+    this.config = config;
+
+    /**
+     * List of pairs of event name and corresponding function to grab the actual value from the
+     * gamepad while applying the mapping.
+     *
+     * @private {[[string,(gamepad:Gamepad) => boolean]]}
+     */
+    this.grabbers = InputMgr.eventNames.map((e) => [
+      e,
+      GamepadMapper.createGrabberForConfigKey(config, e),
+    ]);
+  }
+
+  /**
+   * Create function for grabbing the actual value from the gamepad while applying
+   * the mapping based on the internal config and the given event name.
+   *
+   * @param {GamepadMapperConfig} config The gamepad mapper configuration.
+   * @param {string} key The event name.
+   * @returns {(gamepad:Gamepad) => boolean}
+   */
+  static createGrabberForConfigKey(config, key) {
+    // compute a singed axis index for each direction
+    const horizontalFactor = config.axes.invertHorizontal ? -1 : 1;
+    const verticalFactor = config.axes.invertVertical ? -1 : 1;
+    const axesDirectionMap = {
+      up: +config.axes.vertical * verticalFactor,
+      down: -config.axes.vertical * verticalFactor,
+      left: +config.axes.horizontal * horizontalFactor,
+      right: -config.axes.horizontal * horizontalFactor,
+    };
+    const fromAxis = typeof axesDirectionMap[key] !== 'undefined'
+      ? GamepadMapper.createGrabberForAxis(axesDirectionMap[key])
+      : () => false;
+    const fromButton = typeof config?.buttons?.[key] !== 'undefined'
+      ? GamepadMapper.createGrabberForButton(config.buttons[key])
+      : () => false;
+    return (gamepad) => fromAxis(gamepad) || fromButton(gamepad);
+  }
+
+  /**
+   * Create function for grabbing the value from a gamepad axis.
+   *
+   * TODO: Add support for a customizable axis threshold.
+   *
+   * @param {number} signedIndex The index of the axis. Negative values are interpreted as the
+   *  negative axis (including +0 and -0).
+   * @returns {(gamepad:Gamepad) => boolean}
+   */
+  static createGrabberForAxis(signedIndex) {
+    const index = Math.abs(signedIndex);
+    const threshold = 0.5;
+    // the division is intentional to distinguish between positive and negative zero (IEEE 754)
+    const sign = Math.sign(1.0 / signedIndex);
+    return (gamepad) => sign * (gamepad.axes[index] ?? 0.0) >= threshold;
+  }
+
+  /**
+   * Create function for grabbing the value from a gamepad button.
+   *
+   * @param {number} index The index of the button.
+   * @returns {(gamepad:Gamepad) => boolean}
+   */
+  static createGrabberForButton(index) {
+    return (gamepad) => gamepad.buttons[index]?.pressed ?? false;
+  }
+
+  /**
+   *  Grab the input from the gamepad for all event names.
+   *
+   * @param {Gamepad} gamepad The gamepad to grab the input from. Must not be null.
+   * @returns {InputMgrState}
+   */
+  grab(gamepad) {
+    return /** @type {InputMgrState} */ Object.fromEntries(
+      this.grabbers.map(([key, grabber]) => [key, grabber(gamepad)])
+    );
+  }
+}
+
+module.exports = GamepadMapper;
 
 
 /***/ }),
@@ -41393,6 +43043,129 @@ module.exports = KeyboardInputMgr;
 
 /***/ }),
 
+/***/ "./src/js/lib/input/multiplex-input-mgr.js":
+/*!*************************************************!*\
+  !*** ./src/js/lib/input/multiplex-input-mgr.js ***!
+  \*************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const InputMgr = __webpack_require__(/*! ./input-mgr */ "./src/js/lib/input/input-mgr.js");
+
+/**
+ * Combines input from multiple input managers into one.
+ *
+ * The lifecycle management and updating of the wrapped input managers is up to the user of this class.
+ *
+ * @augments InputMgr
+ */
+class MultiplexInputMgr extends InputMgr {
+  constructor(...inputMgrs) {
+    super();
+    this.inputMgrs = [];
+    inputMgrs.forEach((inputMgr) => this.addInputMgr(inputMgr));
+  }
+
+  /**
+   * Add an input manager to the multiplexer.
+   *
+   * @param {InputMgr} inputMgr
+   */
+  addInputMgr(inputMgr) {
+    this.inputMgrs.push(inputMgr);
+  }
+
+  /**
+   * Remove an input manager from the multiplexer.
+   *
+   * @param {InputMgr} inputMgr
+   */
+  removeInputMgr(inputMgr) {
+    const inputMgrIndex = this.inputMgrs.indexOf(inputMgr);
+    if (inputMgrIndex >= 0) {
+      this.inputMgrs.splice(inputMgrIndex, 1);
+    }
+  }
+
+  updateState() {
+    const newState = this.inputMgrs
+      .map((inputMgr) => inputMgr.getState())
+      .reduce((acc, state) => {
+        InputMgr.eventNames.forEach((eventName) => {
+          acc[eventName] = acc[eventName] || state[eventName];
+        });
+        return acc;
+      }, InputMgr.getInitialState());
+    Object.assign(this.state, newState);
+  }
+
+  update() {
+    this.inputMgrs.forEach((inputMgr) => inputMgr.update());
+    super.update();
+  }
+}
+
+module.exports = MultiplexInputMgr;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/input/player-app-input-router.js":
+/*!*****************************************************!*\
+  !*** ./src/js/lib/input/player-app-input-router.js ***!
+  \*****************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const PcMovementConnection = __webpack_require__(/*! ./connections/pc-movement */ "./src/js/lib/input/connections/pc-movement.js");
+const DialogueOverlayConnection = __webpack_require__(/*! ./connections/dialogue-overlay */ "./src/js/lib/input/connections/dialogue-overlay.js");
+const MenuConnection = __webpack_require__(/*! ./connections/menu */ "./src/js/lib/input/connections/menu.js");
+
+class PlayerAppInputRouter {
+  constructor(inputManager) {
+    this.inputManager = inputManager;
+    this.currentConnection = null;
+  }
+
+  setConnection(connection) {
+    this.unroute();
+    this.currentConnection = connection;
+    this.currentConnection.route();
+  }
+
+  unroute() {
+    if (this.currentConnection) {
+      this.currentConnection.unroute();
+      this.currentConnection = null;
+    }
+  }
+
+  isRouted() {
+    return this.currentConnection !== null;
+  }
+
+  routeToPcMovement(playerApp) {
+    this.setConnection(new PcMovementConnection(this.inputManager, playerApp));
+  }
+
+  routeToDialogueOverlay(dialogueOverlay, dialogueSequencer) {
+    this.setConnection(
+      new DialogueOverlayConnection(this.inputManager, dialogueOverlay, dialogueSequencer)
+    );
+  }
+
+  routeToMenus(playerApp) {
+    this.setConnection(new MenuConnection(this.inputManager, playerApp));
+  }
+
+  routeToNone() {
+    this.unroute();
+  }
+}
+
+module.exports = PlayerAppInputRouter;
+
+
+/***/ }),
+
 /***/ "./src/js/lib/model/character.js":
 /*!***************************************!*\
   !*** ./src/js/lib/model/character.js ***!
@@ -41435,6 +43208,362 @@ class Character {
 }
 
 module.exports = Character;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/model/dialogues/dialogue-iterator-context.js":
+/*!*****************************************************************!*\
+  !*** ./src/js/lib/model/dialogues/dialogue-iterator-context.js ***!
+  \*****************************************************************/
+/***/ ((module) => {
+
+class DialogueIteratorContext {
+  constructor(flags) {
+    this.flags = flags;
+    this.cycleIds = {};
+  }
+
+  clearState() {
+    this.cycleIds = {};
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  random(max) {
+    return Math.floor(Math.random() * max);
+  }
+
+  getLastCycleId(nodeId) {
+    return this.cycleIds[nodeId] || null;
+  }
+
+  setLastCycleId(nodeId, itemId) {
+    this.cycleIds[nodeId] = itemId;
+  }
+}
+
+module.exports = DialogueIteratorContext;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/model/dialogues/dialogue-iterator.js":
+/*!*********************************************************!*\
+  !*** ./src/js/lib/model/dialogues/dialogue-iterator.js ***!
+  \*********************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const LogicParser = __webpack_require__(/*! ./logic-parser */ "./src/js/lib/model/dialogues/logic-parser.js");
+
+/**
+ * Iterates through a dialogue tree.
+ */
+class DialogueIterator {
+  /**
+   * Creates a new iterator for the given dialogue.
+   *
+   * @param {Dialogue} dialogue
+   * @param {DialogueIteratorContext} context
+   */
+  constructor(dialogue, context) {
+    this.dialogue = dialogue;
+    this.context = context;
+    this.conditionParser = new LogicParser(context);
+    this.reset();
+  }
+
+  /**
+   * Resets the iterator to the beginning of the dialogue.
+   */
+  reset() {
+    this.activeNode = this.dialogue.root;
+  }
+
+  /**
+   * Returns true if the iterator has reached the end of the dialogue.
+   * @returns {boolean}
+   */
+  isEnd() {
+    return this.activeNode === null;
+  }
+
+  /**
+   * Returns the current active node.
+   * @returns {*|null}
+   */
+  getActiveNode() {
+    return this.activeNode;
+  }
+
+  /**
+   * Returns responses in the current active node that have all their conditions met.
+   *
+   * @returns {Array|null}
+   */
+  getEnabledResponses() {
+    if (this.activeNode === null) {
+      return null;
+    }
+
+    if (!this.activeNode.responses) {
+      return null;
+    }
+
+    return this.activeNode.responses
+      .filter((response) => !response.cond || !!this.conditionParser.evaluate(response.cond));
+  }
+
+  /**
+   * Returns the response with the given ID in the active node.
+   *
+   * @param {string} responseId
+   * @returns {Object|null}
+   */
+  getResponse(responseId) {
+    if (this.activeNode === null) {
+      return null;
+    }
+
+    if (!this.activeNode.responses) {
+      return null;
+    }
+
+    return this.activeNode.responsesById[responseId];
+  }
+
+  /**
+   * Advances the iterator to the next node.
+   *
+   * @throws Error if the active node type is unknown.
+   */
+  next() {
+    if (this.activeNode === null) {
+      return;
+    }
+
+    const enabledResponses = this.getEnabledResponses();
+    if (enabledResponses && enabledResponses.length > 0) {
+      throw new Error(`Can't use next() on a node of type 'statement' with responses (${this.activeNode.id}:${this.dialogue.root.id})`);
+    }
+
+    this.setFlags(this.activeNode.set);
+
+    let transitioned = false;
+    switch (this.activeNode.type) {
+      case 'statement':
+      case 'effect':
+        transitioned = this.nextOnStatement();
+        break;
+      case 'root':
+      case 'first':
+        transitioned = this.nextOnFirst();
+        break;
+      case 'sequence':
+        transitioned = this.nextOnSequence();
+        break;
+      case 'random':
+        transitioned = this.nextOnRandom();
+        break;
+      case 'cycle':
+        transitioned = this.nextOnCycle();
+        break;
+      default:
+        throw new Error(`Unknown node type: ${this.activeNode.type} (${this.activeNode.id}:${this.dialogue.root.id})`);
+    }
+    if (transitioned === false) {
+      transitioned = this.nextThroughParent();
+    }
+    if (transitioned === false) {
+      this.activeNode = null;
+    }
+  }
+
+  nextWithResponse(responseId) {
+    if (this.activeNode === null) {
+      return;
+    }
+
+    if (this.activeNode.responses === undefined) {
+      throw new Error(`Can't use nextWithResponse on a node without responses (${this.activeNode.type}:${this.dialogue.root.id})`);
+    }
+
+    const response = this.activeNode.responsesById[responseId];
+    if (!response) {
+      throw new Error(`Unknown response id: ${responseId} (${this.activeNode.id}:${this.dialogue.root.id})`);
+    }
+
+    this.setFlags(this.activeNode.set);
+    this.setFlags(response.set);
+    if (response.then) {
+      this.goTo(response.then);
+      return;
+    }
+
+    if (!this.nextOnStatement()) {
+      this.activeNode = null;
+    }
+  }
+
+  /**
+   * Jumps to a node identified by its id.
+   *
+   * @private
+   * @throws Error if the node id is not found.
+   * @param {string} nodeId
+   */
+  goTo(nodeId) {
+    const nextNode = this.dialogue.getNode(nodeId);
+    if (nextNode === undefined) {
+      throw new Error(`Can't find node id: ${nodeId} (active node = ${this.activeNode}:${this.dialogue.root.id})`);
+    }
+    this.activeNode = nextNode;
+  }
+
+  getEnabledItems(items) {
+    if (!items) return [];
+    return items.filter((item) => {
+      try {
+        return (item.cond === undefined || items.cond === null || item.cond.trim() === ''
+          || this.conditionParser.evaluate(item.cond));
+      } catch (e) {
+        throw new Error(`Error parsing condition: ${item.cond} (${this.activeNode.id}:${this.dialogue.root.id}): ${e.message}`);
+      }
+    });
+  }
+
+  setFlags(assignments) {
+    if (!assignments) return;
+    assignments.forEach((assignment) => {
+      this.processAssignment(assignment);
+    });
+  }
+
+  processAssignment(assignment) {
+    // Parse through a regex
+    // flag ((operator) intLiteral)?
+    const match = assignment.match(/([a-zA-Z_][.a-zA-Z0-9_]*)(\s*([+-]?=)\s*([0-9]{1,3}))?/);
+    if (!match) {
+      throw new Error(`Invalid assignment: ${assignment} (${this.activeNode.id}:${this.dialogue.root.id})`);
+    }
+    const [, flag, , operator, intLiteral] = match;
+    if (operator === undefined) {
+      this.context.flags.touch(flag);
+    }
+    if (operator === '=') {
+      this.context.flags.set(flag, parseInt(intLiteral, 10));
+    }
+    if (operator === '+=') {
+      this.context.flags.inc(flag, parseInt(intLiteral, 10));
+    }
+    if (operator === '-=') {
+      this.context.flags.dec(flag, parseInt(intLiteral, 10));
+    }
+  }
+
+  /**
+   * Jumps to the next node when the active node is of type 'first'
+   *
+   * @private
+   * @returns {boolean} true if the transition to the next node was successful.
+   */
+  nextOnFirst() {
+    const matchingItems = this.getEnabledItems(this.activeNode.items);
+    this.activeNode = matchingItems.length > 0 ? matchingItems[0] : null;
+    return true;
+  }
+
+  /**
+   * Jumps to the next node when the active node is of type 'sequence'
+   *
+   * @private
+   * @returns {boolean} true if the transition to the next node was successful.
+   */
+  nextOnSequence() {
+    const matchingItems = this.getEnabledItems(this.activeNode.items);
+    if (matchingItems.length > 0) {
+      [this.activeNode] = matchingItems;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Jumps to the next node when the active node is of type 'random'
+   *
+   * @private
+   * @returns {boolean} true if the transition to the next node was successful.
+   */
+  nextOnRandom() {
+    const matchingItems = this.getEnabledItems(this.activeNode.items);
+    if (matchingItems.length > 0) {
+      const index = this.context.random(matchingItems.length);
+      this.activeNode = matchingItems[index];
+      return true;
+    }
+    return false;
+  }
+
+  nextOnCycle() {
+    const lastCycleId = this.context.getLastCycleId(this.activeNode.id);
+    // Order the items starting with the one right after the last cycle index
+    // and then wrapping around to the beginning of the list.
+    const { items } = this.activeNode;
+    const lastCycleIndex = items.findIndex((item) => item.id === lastCycleId);
+    const orderedItems = items.slice(lastCycleIndex + 1).concat(items.slice(0, lastCycleIndex + 1));
+    // Now find the first enabled item.
+    const matchingItems = this.getEnabledItems(orderedItems);
+    if (matchingItems.length > 0) {
+      this.context.setLastCycleId(this.activeNode.id, matchingItems[0].id);
+      [this.activeNode] = matchingItems;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Jumps to the next node when the active node is of type 'statement'
+   *
+   * @private
+   * @returns {boolean} true if the transition to the next node was successful.
+   */
+  nextOnStatement() {
+    if (this.activeNode.then) {
+      this.goTo(this.activeNode.then);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Jumps to the next node by traversing the parent nodes.
+   *
+   * @private
+   * @returns {boolean} true if the transition to the next node was successful.
+   */
+  nextThroughParent() {
+    let currentParent = this.activeNode.parent;
+    let currentChild = this.activeNode;
+    while (currentParent) {
+      if (currentParent.type === 'sequence') {
+        const matchingItems = this.getEnabledItems(currentParent.items);
+        const index = matchingItems.indexOf(currentChild);
+        if (index < matchingItems.length - 1) {
+          this.activeNode = matchingItems[index + 1];
+          return true;
+        }
+      }
+      if (currentParent.then) {
+        this.goTo(currentParent.then);
+        return true;
+      }
+      currentChild = currentParent;
+      currentParent = currentParent.parent;
+    }
+    return false;
+  }
+}
+
+module.exports = DialogueIterator;
 
 
 /***/ }),
@@ -41509,6 +43638,374 @@ function validateDialogueDefinition(dialogueDefinition) {
 }
 
 module.exports = { validateDialogueDefinition };
+
+
+/***/ }),
+
+/***/ "./src/js/lib/model/dialogues/dialogue-sequencer-states/dialogue-sequencer-state.js":
+/*!******************************************************************************************!*\
+  !*** ./src/js/lib/model/dialogues/dialogue-sequencer-states/dialogue-sequencer-state.js ***!
+  \******************************************************************************************/
+/***/ ((module) => {
+
+/* eslint-disable class-methods-use-this */
+class DialogueSequencerState {
+  constructor(dialogueSequencer) {
+    this.dialogueSequencer = dialogueSequencer;
+    this.dialogueOverlay = dialogueSequencer.dialogueOverlay;
+    this.dialogueIterator = dialogueSequencer.dialogueIterator;
+    this.activeNode = this.dialogueIterator ? this.dialogueIterator.getActiveNode() : null;
+  }
+
+  onBegin() {
+
+  }
+
+  onAction() {
+
+  }
+
+  onEnd() {
+
+  }
+}
+
+module.exports = DialogueSequencerState;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/model/dialogues/dialogue-sequencer-states/effect-state.js":
+/*!******************************************************************************!*\
+  !*** ./src/js/lib/model/dialogues/dialogue-sequencer-states/effect-state.js ***!
+  \******************************************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const DialogueSequencerState = __webpack_require__(/*! ./dialogue-sequencer-state */ "./src/js/lib/model/dialogues/dialogue-sequencer-states/dialogue-sequencer-state.js");
+const DialogueEffect = __webpack_require__(/*! ../effects/dialogue-effect */ "./src/js/lib/model/dialogues/effects/dialogue-effect.js");
+
+class DialogueSequencerEffectState extends DialogueSequencerState {
+  constructor(dialogueSequencer) {
+    super(dialogueSequencer);
+    this.handleEffectStartComplete = this.handleEffectStartComplete.bind(this);
+    this.handleEffectEndComplete = this.handleEffectEndComplete.bind(this);
+    this.effectType = typeof this.activeNode.effect === 'string'
+      ? this.activeNode.effect : this.activeNode.effect.type;
+    this.effectOptions = typeof this.activeNode.effect === 'string'
+      ? {} : this.activeNode.effect.options || {};
+    this.effectPhase = this.activeNode.effect?.phase || 'all';
+    this.effect = null;
+  }
+
+  onBegin() {
+    if (this.effectPhase === 'end') {
+      this.dialogueSequencer.endActiveEffect(this.effectType, this.handleEffectEndComplete);
+    } else {
+      this.effect = this.dialogueSequencer.createEffect(this.effectType, this.effectOptions);
+      this.effect.start(this.handleEffectStartComplete);
+    }
+  }
+
+  onAction() {
+    if (this.effect
+      && this.effect.state !== DialogueEffect.States.IDLE
+      && this.effect.state !== DialogueEffect.States.FINISHED) {
+      this.effect.handleActionButton();
+    }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  onEnd() {
+    // Nothing to do
+  }
+
+  handleEffectStartComplete() {
+    if (this.effectPhase === 'all') {
+      this.effect.end(this.handleEffectEndComplete);
+    } else if (this.effectPhase === 'start') {
+      this.dialogueSequencer.endUi();
+    }
+  }
+
+  handleEffectEndComplete() {
+    this.dialogueSequencer.terminateEffect(this.effectType);
+    this.dialogueSequencer.endUi();
+  }
+}
+
+module.exports = DialogueSequencerEffectState;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/model/dialogues/dialogue-sequencer-states/response-state.js":
+/*!********************************************************************************!*\
+  !*** ./src/js/lib/model/dialogues/dialogue-sequencer-states/response-state.js ***!
+  \********************************************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const DialogueSequencerState = __webpack_require__(/*! ./dialogue-sequencer-state */ "./src/js/lib/model/dialogues/dialogue-sequencer-states/dialogue-sequencer-state.js");
+const DialogueSequencerThenTextState = __webpack_require__(/*! ./then-state */ "./src/js/lib/model/dialogues/dialogue-sequencer-states/then-state.js");
+
+class DialogueSequencerResponseState extends DialogueSequencerState {
+  constructor(dialogueSequencer) {
+    super(dialogueSequencer);
+    this.responses = this.dialogueIterator.getEnabledResponses();
+  }
+
+  onBegin() {
+    this.dialogueOverlay.showResponseOptions(
+      Object.fromEntries(this.responses.map(
+        (response) => [response.id, [response.text, response.class || null]]
+      ))
+    );
+  }
+
+  onAction() {
+    this.dialogueOverlay.hideResponseOptions();
+    this.dialogueOverlay.hideSpeech();
+    const responseId = this.dialogueOverlay.getSelectedResponseId();
+    const selectedResponse = this.dialogueIterator.getResponse(responseId);
+    if (selectedResponse.thenText) {
+      this.dialogueSequencer.setUiState(
+        new DialogueSequencerThenTextState(this.dialogueSequencer, responseId)
+      );
+    } else {
+      this.dialogueSequencer.endUi(responseId);
+    }
+  }
+}
+
+module.exports = DialogueSequencerResponseState;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/model/dialogues/dialogue-sequencer-states/text-state.js":
+/*!****************************************************************************!*\
+  !*** ./src/js/lib/model/dialogues/dialogue-sequencer-states/text-state.js ***!
+  \****************************************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const DialogueSequencerState = __webpack_require__(/*! ./dialogue-sequencer-state */ "./src/js/lib/model/dialogues/dialogue-sequencer-states/dialogue-sequencer-state.js");
+const DialogueSequencerResponseState = __webpack_require__(/*! ./response-state */ "./src/js/lib/model/dialogues/dialogue-sequencer-states/response-state.js");
+
+class DialogueSequencerTextState extends DialogueSequencerState {
+  constructor(dialogueSequencer) {
+    super(dialogueSequencer);
+    this.handleSpeechComplete = this.handleSpeechComplete.bind(this);
+  }
+
+  handleSpeechComplete() {
+    this.speechDone = true;
+    const responses = this.dialogueIterator.getEnabledResponses();
+    if (responses && responses.length > 0) {
+      this.dialogueSequencer.setUiState(
+        new DialogueSequencerResponseState(this.dialogueSequencer)
+      );
+    } else {
+      this.dialogueOverlay.showPressToContinue();
+    }
+  }
+
+  onBegin() {
+    this.speechDone = false;
+    this.dialogueOverlay.showSpeech(this.activeNode.text, this.activeNode.class || null);
+    this.dialogueOverlay.events.once('speechComplete', this.handleSpeechComplete);
+  }
+
+  onAction() {
+    if (this.speechDone) {
+      this.dialogueOverlay.hideSpeech();
+      this.dialogueSequencer.endUi();
+    } else {
+      this.dialogueOverlay.speedUpSpeech();
+    }
+  }
+
+  onEnd() {
+    this.dialogueOverlay.events.off('speechComplete', this.handleSpeechComplete);
+  }
+}
+
+module.exports = DialogueSequencerTextState;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/model/dialogues/dialogue-sequencer-states/then-state.js":
+/*!****************************************************************************!*\
+  !*** ./src/js/lib/model/dialogues/dialogue-sequencer-states/then-state.js ***!
+  \****************************************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const DialogueSequencerState = __webpack_require__(/*! ./dialogue-sequencer-state */ "./src/js/lib/model/dialogues/dialogue-sequencer-states/dialogue-sequencer-state.js");
+
+class DialogueSequencerThenTextState extends DialogueSequencerState {
+  constructor(dialogueSequencer, responseId) {
+    super(dialogueSequencer);
+    this.responseId = responseId;
+    this.handleSpeechComplete = this.handleSpeechComplete.bind(this);
+  }
+
+  onBegin() {
+    this.speechDone = false;
+    const response = this.dialogueIterator.getResponse(this.responseId);
+    this.dialogueOverlay.showSpeech(response.thenText, response.thenClass || null);
+    this.dialogueOverlay.events.once('speechComplete', this.handleSpeechComplete);
+  }
+
+  handleSpeechComplete() {
+    this.speechDone = true;
+    this.dialogueOverlay.showPressToContinue();
+  }
+
+  onAction() {
+    if (this.speechDone) {
+      this.dialogueOverlay.hideSpeech();
+      this.dialogueSequencer.endUi(this.responseId);
+    } else {
+      this.dialogueOverlay.speedUpSpeech();
+    }
+  }
+
+  onEnd() {
+    this.dialogueOverlay.events.off('speechComplete', this.handleSpeechComplete);
+  }
+}
+
+module.exports = DialogueSequencerThenTextState;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/model/dialogues/dialogue-sequencer.js":
+/*!**********************************************************!*\
+  !*** ./src/js/lib/model/dialogues/dialogue-sequencer.js ***!
+  \**********************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const EventEmitter = __webpack_require__(/*! events */ "./node_modules/events/events.js");
+const DialogueIterator = __webpack_require__(/*! ./dialogue-iterator */ "./src/js/lib/model/dialogues/dialogue-iterator.js");
+const DialogueSequencerTextState = __webpack_require__(/*! ./dialogue-sequencer-states/text-state */ "./src/js/lib/model/dialogues/dialogue-sequencer-states/text-state.js");
+const DialogueSequencerEffectState = __webpack_require__(/*! ./dialogue-sequencer-states/effect-state */ "./src/js/lib/model/dialogues/dialogue-sequencer-states/effect-state.js");
+
+class DialogueSequencer {
+  constructor(dialogueEffectFactory, dialogueOverlay) {
+    this.dialogueEffectFactory = dialogueEffectFactory;
+    this.dialogueOverlay = dialogueOverlay;
+    this.dialogue = null;
+    this.dialogueIterator = null;
+    this.uiState = null;
+    this.activeEffects = {};
+
+    this.events = new EventEmitter();
+  }
+
+  setUiState(state) {
+    if (this.uiState) {
+      this.uiState.onEnd();
+    }
+    this.uiState = state;
+    if (this.uiState) {
+      this.uiState.onBegin();
+    }
+  }
+
+  endUi(responseId = null) {
+    this.uiState = null;
+    if (responseId !== null) {
+      this.dialogueIterator.nextWithResponse(responseId);
+    } else {
+      this.dialogueIterator.next();
+    }
+    this.runUntilInteractivity();
+  }
+
+  play(dialogue, context, options) {
+    this.dialogue = dialogue;
+    this.dialogueOverlay.setTopTitle(options.top || null);
+    this.dialogueIterator = new DialogueIterator(dialogue, context);
+    this.runUntilInteractivity();
+  }
+
+  runUntilInteractivity() {
+    const { dialogueIterator } = this;
+
+    if (!this.handledByUI(dialogueIterator.getActiveNode())) {
+      do {
+        dialogueIterator.next();
+      } while (!dialogueIterator.isEnd() && !this.handledByUI(dialogueIterator.getActiveNode()));
+    }
+
+    if (this.handledByUI(dialogueIterator.getActiveNode())) {
+      const nodeType = dialogueIterator.getActiveNode().type;
+      if (nodeType === 'statement') {
+        this.setUiState(new DialogueSequencerTextState(this));
+      } else if (nodeType === 'effect') {
+        this.setUiState(new DialogueSequencerEffectState(this));
+      }
+    } else {
+      this.onDialogueEnd();
+    }
+  }
+
+  onDialogueEnd() {
+    this.events.emit('end');
+    this.terminate();
+  }
+
+  action() {
+    if (this.uiState) {
+      this.uiState.onAction();
+    }
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  handledByUI(node) {
+    return node && (node.type === 'statement' || node.type === 'effect');
+  }
+
+  createEffect(effectType, effectOptions) {
+    this.terminateEffect(effectType);
+    this.activeEffects[effectType] = this.dialogueEffectFactory
+      .createEffect(effectType, effectOptions);
+    return this.activeEffects[effectType];
+  }
+
+  endActiveEffect(effectType, endDoneCallback) {
+    if (this.activeEffects[effectType]) {
+      this.activeEffects[effectType].end(endDoneCallback);
+    } else {
+      endDoneCallback();
+    }
+  }
+
+  terminateEffect(effectType) {
+    if (this.activeEffects[effectType]) {
+      this.activeEffects[effectType].terminate();
+    }
+    delete this.activeEffects[effectType];
+  }
+
+  terminateAllEffects() {
+    Object.keys(this.activeEffects).forEach((effectType) => {
+      this.activeEffects[effectType].terminate();
+    });
+    this.activeEffects = {};
+  }
+
+  terminate() {
+    this.events.emit('terminate');
+    this.terminateAllEffects();
+    this.setUiState(null);
+    this.dialogueOverlay.hide();
+    this.dialogueIterator = null;
+    this.dialogue = null;
+  }
+}
+
+module.exports = DialogueSequencer;
 
 
 /***/ }),
@@ -41588,6 +44085,465 @@ class Dialogue {
 }
 
 module.exports = Dialogue;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/model/dialogues/effects/dialogue-effect-factory.js":
+/*!***********************************************************************!*\
+  !*** ./src/js/lib/model/dialogues/effects/dialogue-effect-factory.js ***!
+  \***********************************************************************/
+/***/ ((module) => {
+
+class DialogueEffectFactory {
+  static Effects = {};
+
+  /**
+   * Constructor
+   *
+   * @param {PlayerApp} app
+   */
+  constructor(app) {
+    this.app = app;
+  }
+
+  /**
+   * Create a new effect.
+   *
+   * @param {string} name
+   *  The name of the effect.
+   * @param {object} options
+   *  Options for the effect.
+   * @returns {DialogueEffect}
+   *  The effect.
+   */
+  createEffect(name, options) {
+    const Effect = DialogueEffectFactory.Effects[name];
+    if (!Effect) {
+      throw new Error(`Unknown effect: ${name}`);
+    }
+    return new Effect(this.app, options);
+  }
+}
+
+DialogueEffectFactory.registerEffect = function (name, effectClass) {
+  DialogueEffectFactory.Effects[name] = effectClass;
+};
+
+module.exports = DialogueEffectFactory;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/model/dialogues/effects/dialogue-effect-image.js":
+/*!*********************************************************************!*\
+  !*** ./src/js/lib/model/dialogues/effects/dialogue-effect-image.js ***!
+  \*********************************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const { registerEffect } = __webpack_require__(/*! ./dialogue-effect-factory */ "./src/js/lib/model/dialogues/effects/dialogue-effect-factory.js");
+const DialogueEffect = __webpack_require__(/*! ./dialogue-effect */ "./src/js/lib/model/dialogues/effects/dialogue-effect.js");
+
+class DialogueEffectImage extends DialogueEffect {
+  constructor(app, options) {
+    super(app, options);
+    this.timeoutTimer = null;
+  }
+
+  onStarting(doneCallback) {
+    const src = this.getSrcUrl(this.options.src);
+    this.app.playerOverlayMgr.imageDisplayOverlay.showImage(src, {
+      size: this.options.size,
+      enterAnimationDuration: this.options.enterAnimationDuration,
+    }).then(() => {
+      this.timeoutTimer = setTimeout(() => {
+        doneCallback();
+      }, this.options.enterAnimationDuration + this.options.displayDuration);
+    });
+  }
+
+  onEnding(doneCallback) {
+    this.app.playerOverlayMgr.imageDisplayOverlay.hideImage(this.options.exitAnimationDuration);
+    this.timeoutTimer = setTimeout(() => {
+      doneCallback();
+    }, this.options.exitAnimationDuration);
+  }
+
+  terminate() {
+    clearTimeout(this.timeoutTimer);
+    this.app.playerOverlayMgr.imageDisplayOverlay.clear();
+    super.terminate();
+  }
+
+  getSrcUrl(src) {
+    if (typeof src === 'string') {
+      return this.app.getStorylineImageUrl(src);
+    }
+    if (typeof src === 'object') {
+      return Object.fromEntries(
+        Object.entries(src).map(([key, value]) => [key, this.app.getStorylineImageUrl(value)])
+      );
+    }
+    throw new Error('Invalid src type');
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getDefaultOptions() {
+    return {
+      enterAnimationDuration: 1000,
+      exitAnimationDuration: 1000,
+      displayDuration: 3000,
+      size: 'full',
+    };
+  }
+}
+
+registerEffect('image', DialogueEffectImage);
+
+module.exports = DialogueEffectImage;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/model/dialogues/effects/dialogue-effect-init.js":
+/*!********************************************************************!*\
+  !*** ./src/js/lib/model/dialogues/effects/dialogue-effect-init.js ***!
+  \********************************************************************/
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
+
+// Init all effects.
+// This file should only contain imports of all effects, so it can be easily modded.
+//
+__webpack_require__(/*! ./dialogue-effect-image */ "./src/js/lib/model/dialogues/effects/dialogue-effect-image.js");
+__webpack_require__(/*! ./dialogue-effect-pannzoom */ "./src/js/lib/model/dialogues/effects/dialogue-effect-pannzoom.js");
+
+
+/***/ }),
+
+/***/ "./src/js/lib/model/dialogues/effects/dialogue-effect-pannzoom.js":
+/*!************************************************************************!*\
+  !*** ./src/js/lib/model/dialogues/effects/dialogue-effect-pannzoom.js ***!
+  \************************************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const { registerEffect } = __webpack_require__(/*! ./dialogue-effect-factory */ "./src/js/lib/model/dialogues/effects/dialogue-effect-factory.js");
+const DialogueEffect = __webpack_require__(/*! ./dialogue-effect */ "./src/js/lib/model/dialogues/effects/dialogue-effect.js");
+
+class DialogueEffectPanNZoom extends DialogueEffect {
+  constructor(app, options) {
+    super(app, options);
+    this.storeCameraPreset();
+    this.drone = null;
+    this.displayTimer = null;
+  }
+
+  storeCameraPreset() {
+    this.savedPreset = this.app.gameView.cameraPreset;
+    this.savedTarget = this.app.gameView.camera.getTarget();
+    this.hasReset = false;
+  }
+
+  restoreCameraPreset(instant = false) {
+    if (!this.hasReset) {
+      this.hasReset = true;
+      this.app.gameView.camera.setTarget(this.savedTarget);
+      this.app.gameView.cameraUsePreset(this.savedPreset, instant);
+    }
+  }
+
+  getTargetCoordinates() {
+    if (this.options.targetType === 'npc') {
+      const npcView = this.app.gameView.getNpcView(this.options.target);
+      return npcView.character.position;
+    }
+    if (this.options.targetType === 'scenery') {
+      const sceneryView = this.app.gameView.getSceneryView(this.options.target);
+      return sceneryView.scenery.position;
+    }
+    if (typeof this.options.target === 'object' && this.options.target.x && this.options.target.y) {
+      return this.options.target;
+    }
+    throw new Error('Invalid target type');
+  }
+
+  onStarting(doneCallback) {
+    const targetCoordinates = this.getTargetCoordinates();
+    const startPosition = this.app.gameView.camera.getTarget().position;
+    this.drone = this.app.gameView.createDrone({
+      minSpeed: this.options.minSpeed,
+      maxSpeed: this.options.maxSpeed,
+      accelerationFactor: this.options.accelerationFactor,
+      slowDownDistance: this.options.slowDownDistance,
+    }, startPosition.x, startPosition.y);
+    this.drone.setTargets([targetCoordinates]);
+    this.drone.events.once('reachedAllTargets', () => {
+      clearTimeout(this.displayTimer);
+      this.displayTimer = setTimeout(() => {
+        doneCallback();
+      }, this.options.displayDuration);
+    });
+    this.app.gameView.cameraUsePreset({
+      offset: this.options.targetOffset,
+      zoom: this.options.zoom,
+    });
+    this.app.gameView.camera.setTarget(this.drone);
+  }
+
+  onEnding(doneCallback) {
+    clearTimeout(this.displayTimer);
+    this.displayTimer = setTimeout(() => {
+      this.drone.setTargets([{ x: this.savedTarget.x, y: this.savedTarget.y }]);
+      this.drone.events.once('reachedAllTargets', () => {
+        this.restoreCameraPreset();
+        doneCallback();
+      });
+    }, this.options.displayEndDuration);
+  }
+
+  terminate() {
+    clearTimeout(this.displayTimer);
+    this.drone.stop();
+    this.restoreCameraPreset(true);
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  getDefaultOptions() {
+    return {
+      targetType: 'npc',
+      targetOffset: { x: 0, y: 0 },
+      zoom: 0.75,
+      maxSpeed: 1,
+      minSpeed: 0.1,
+      accelerationFactor: 0.01,
+      slowDownDistance: 400,
+      displayDuration: 3000,
+      displayEndDuration: 0,
+    };
+  }
+}
+
+registerEffect('pan-n-zoom', DialogueEffectPanNZoom);
+
+module.exports = DialogueEffectPanNZoom;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/model/dialogues/effects/dialogue-effect.js":
+/*!***************************************************************!*\
+  !*** ./src/js/lib/model/dialogues/effects/dialogue-effect.js ***!
+  \***************************************************************/
+/***/ ((module) => {
+
+/* eslint-disable class-methods-use-this,no-unused-vars */
+/**
+ * Abstract class for dialogue effects.
+ *
+ * Dialogue effects are used to add visual effects to dialogues.
+ * Each effect type should create a subclass of this class and register it. The game engine
+ * will create an instance of the effect when it is used in a dialogue, passing the options
+ * specified in the dialogue script.
+ *
+ * Effects lifetime is as follows:
+ *
+ * 1. The effect is created.
+ * 2. The start() method is called.
+ * 3. The animate method is called repeatedly, until the effect ends. (not implemented yet)
+ * 4. The handleActionButton method is called if the action button is pressed before the effect is done.
+ * 5. The effect may announce it is done starting by calling the doneCallback passed to the start method.
+ * 6. The end() method is called to start reversing any changes made by the effect.
+ * 7. The effect may announce it is done ending by calling the doneCallback passed to the end method.
+ * 7. The terminate() method is called to clean up any resources used by the effect.
+ *
+ * Until the effect is done ending:
+ * - The animate method will be called. (not implemented yet)
+ * - The handleActionButton method will be called.
+ *
+ * After the effect is done ending:
+ *  - The animate method will not be called. (not implemented yet)
+ *  - The handleActionButton method will no longer be called.
+ *
+ * start() and end() may never be called, if the effect is terminated before it starts, or ends...
+ * ... but terminate() will always be called, and should ensure to clean up any resources and
+ * undo any lasting changes made by the effect.
+ *
+ * Once the terminate method is called:
+ *  - No other methods will be called.
+ */
+class DialogueEffect {
+  /**
+   * Constructor
+   *
+   * @param {PlayerApp} app
+   *  The player app.
+   * @param {object} options
+   *  Options for the effect.
+   */
+  constructor(app, options = {}) {
+    if (this.constructor === DialogueEffect) {
+      throw new TypeError('DialogueEffect is an abstract class and cannot be instantiated.');
+    }
+    this.app = app;
+    this.options = { ...this.getDefaultOptions(), ...options };
+    this.state = DialogueEffect.States.IDLE;
+  }
+
+  /**
+   * Start the effect.
+   *
+   * This method is called by the dialogue sequencer when the effect is to be started.
+   *
+   * @param {function} doneCallback
+   *  Callback to be called when the effect is done.
+   */
+  start(doneCallback) {
+    this.state = DialogueEffect.States.STARTING;
+    this.onStarting(() => {
+      doneCallback();
+      this.state = DialogueEffect.States.ACTIVE;
+      this.onActive();
+    });
+  }
+
+  /**
+   * End the effect, and clean up.
+   *
+   * This method is called by the dialogue sequencer when the changes made by the effect should be
+   * reversed. The effect should call the doneCallback when it is done.
+   */
+  end(doneCallback) {
+    this.state = DialogueEffect.States.ENDING;
+    this.onEnding(() => {
+      doneCallback();
+      this.state = DialogueEffect.States.FINISHED;
+      this.onFinished();
+    });
+  }
+
+  /**
+   * Update the effect.
+   *
+   * @param {number} time
+   */
+  animate(time) {
+    // (not implemented yet)
+  }
+
+  /**
+   * Handle the action button while the effect is not done.
+   *
+   * This method is called by the dialogue sequencer when the action button is pressed, if the
+   * effect is not done. The effect can use this to skip to the end of the effect, or
+   * accelerate it.
+   */
+  handleActionButton() {
+  }
+
+  /**
+   * Get the default options for the effect.
+   *
+   * This method should be overridden by subclasses to provide default options for the effect.
+   * @return {{}}
+   */
+  getDefaultOptions() {
+    return {};
+  }
+
+  /**
+   * Terminate the effect.
+   */
+  terminate() {
+
+  }
+
+  /**
+   * Called when the effect is starting.
+   *
+   * @param {function} doneCallback
+   *  Callback to be called when the effect is done starting.
+   */
+  onStarting(doneCallback) {
+
+  }
+
+  /**
+   * Called when the effect is active.
+   */
+  onActive() {
+
+  }
+
+  /**
+   * Called when the effect is ending.
+   *
+   * @param {function} doneCallback
+   *  Callback to be called when the effect is done ending.
+   */
+  onEnding(doneCallback) {
+
+  }
+
+  /**
+   * Called when the effect is finished.
+   */
+  onFinished() {
+
+  }
+}
+
+DialogueEffect.States = {
+  IDLE: 'idle',
+  STARTING: 'starting',
+  ACTIVE: 'active',
+  ENDING: 'ending',
+  FINISHED: 'finished',
+};
+
+module.exports = DialogueEffect;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/model/dialogues/ending-reader.js":
+/*!*****************************************************!*\
+  !*** ./src/js/lib/model/dialogues/ending-reader.js ***!
+  \*****************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const DialogueIterator = __webpack_require__(/*! ./dialogue-iterator */ "./src/js/lib/model/dialogues/dialogue-iterator.js");
+const { mergeTexts } = __webpack_require__(/*! ../../helpers/i18n */ "./src/js/lib/helpers/i18n.js");
+
+function readEnding(dialogue, context) {
+  const output = [];
+  const classes = [];
+  const iterator = new DialogueIterator(dialogue, context);
+  while (!iterator.isEnd()) {
+    const activeNode = iterator.getActiveNode();
+    if (activeNode.responses !== undefined && activeNode.responses.length > 0) {
+      throw new Error('An ending dialogue must only contain statements with no responses');
+    }
+    if (activeNode.text) {
+      output.push(activeNode.text);
+    }
+    if (activeNode.class) {
+      if (Array.isArray(activeNode.class)) {
+        classes.push(...activeNode.class);
+      } else if (typeof activeNode.class === 'string') {
+        classes.push(activeNode.class);
+      }
+    }
+    iterator.next();
+  }
+
+  return [
+    mergeTexts(output, {
+      separator: '\n',
+    }),
+    classes,
+  ];
+}
+
+module.exports = readEnding;
 
 
 /***/ }),
@@ -41771,6 +44727,48 @@ FlagStore.MIN_VALUE = 0;
 FlagStore.MAX_VALUE = 999;
 
 module.exports = FlagStore;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/model/hint-manager.js":
+/*!******************************************!*\
+  !*** ./src/js/lib/model/hint-manager.js ***!
+  \******************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const EventEmitter = __webpack_require__(/*! events */ "./node_modules/events/events.js");
+
+class HintManager {
+  constructor(config) {
+    this.config = config;
+    this.events = new EventEmitter();
+
+    this.hintDialogueThreshold = this.config?.game?.hintDialogueThreshold || 3;
+
+    this.dialogueCounter = new Set();
+  }
+
+  handleDialogue(npcId) {
+    // If the threshold is 0, the dialogue counter is disabled
+    if (this.hintDialogueThreshold === 0) {
+      return;
+    }
+
+    this.dialogueCounter.add(npcId);
+    if (this.dialogueCounter.size >= this.hintDialogueThreshold) {
+      this.events.emit('hintNeeded');
+      this.reset();
+    }
+  }
+
+  reset() {
+    this.events.emit('reset');
+    this.dialogueCounter.clear();
+  }
+}
+
+module.exports = HintManager;
 
 
 /***/ }),
@@ -42286,6 +45284,66 @@ class QuestTracker {
 }
 
 module.exports = QuestTracker;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/model/round-timer.js":
+/*!*****************************************!*\
+  !*** ./src/js/lib/model/round-timer.js ***!
+  \*****************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const EventEmitter = __webpack_require__(/*! events */ "./node_modules/events/events.js");
+
+class RoundTimer {
+  constructor(seconds) {
+    this.durationSecs = seconds;
+    this.remainingSecs = 0;
+    this.events = new EventEmitter();
+    this.ended = !(this.durationSecs > 0);
+  }
+
+  setDuration(seconds) {
+    this.durationSecs = seconds;
+  }
+
+  setRemainingTime(seconds) {
+    this.remainingSecs = seconds;
+    this.events.emit('update', this.remainingSecs);
+    if (this.remainingSecs <= 0) {
+      this.onEnd();
+    }
+  }
+
+  getRemainingTime() {
+    return this.remainingSecs;
+  }
+
+  start() {
+    this.ended = !(this.durationSecs > 0);
+    this.setRemainingTime(this.durationSecs);
+    if (this.getRemainingTime() > 0) {
+      this.interval = setInterval(() => {
+        this.setRemainingTime(this.getRemainingTime() - 1);
+      }, 1000);
+    }
+  }
+
+  forceEnd() {
+    this.setRemainingTime(0);
+  }
+
+  onEnd() {
+    clearInterval(this.interval);
+    if (!this.ended) {
+      this.ended = true;
+      this.events.emit('end');
+    }
+  }
+}
+
+module.exports = RoundTimer;
 
 
 /***/ }),
@@ -42950,6 +46008,486 @@ module.exports = {
 
 /***/ }),
 
+/***/ "./src/js/lib/view-html/countdown.js":
+/*!*******************************************!*\
+  !*** ./src/js/lib/view-html/countdown.js ***!
+  \*******************************************/
+/***/ ((module) => {
+
+class Countdown {
+  constructor() {
+    this.$element = $('<div></div>')
+      .addClass('countdown');
+  }
+
+  set(remainingSeconds) {
+    const timeLeft = Math.max(remainingSeconds, 0);
+    const secondsLeft = timeLeft % 60;
+    const minutes = Math.floor(timeLeft / 60);
+    this.$element.html(`${minutes}:${secondsLeft < 10 ? '0' : ''}${secondsLeft}`);
+  }
+
+  hide() {
+    this.$element.hide();
+  }
+
+  show() {
+    this.$element.show();
+  }
+}
+
+module.exports = Countdown;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/view-html/decision-screen.js":
+/*!*************************************************!*\
+  !*** ./src/js/lib/view-html/decision-screen.js ***!
+  \*************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const EventEmitter = __webpack_require__(/*! events */ "./node_modules/events/events.js");
+const SpeechText = __webpack_require__(/*! ./speech-text */ "./src/js/lib/view-html/speech-text.js");
+const { I18nTextAdapter } = __webpack_require__(/*! ../helpers/i18n */ "./src/js/lib/helpers/i18n.js");
+const { textWithEmojisToSpeechLines } = __webpack_require__(/*! ../helpers/emoji-utils */ "./src/js/lib/helpers/emoji-utils.js");
+const InclusionBar = __webpack_require__(/*! ./inclusion-bar */ "./src/js/lib/view-html/inclusion-bar.js");
+const { fitParentWidth } = __webpack_require__(/*! ../helpers-web/fit-parent */ "./src/js/lib/helpers-web/fit-parent.js");
+
+class DecisionScreen {
+  constructor(config, lang) {
+    this.config = config;
+    this.events = new EventEmitter();
+    this.lang = lang;
+    this.revealStarted = false;
+
+    this.$element = $('<div></div>')
+      .addClass('decision-screen-wrapper');
+
+    this.$styleWrapper = $('<div></div>')
+      .appendTo(this.$element);
+
+    this.$screen = $('<div></div>')
+      .addClass('decision-screen')
+      .appendTo(this.$styleWrapper);
+
+    this.$title = $('<h1></h1>')
+      .addClass('decision-screen-title')
+      .appendTo(this.$screen);
+
+    this.$icon = $('<div></div>')
+      .addClass('decision-screen-icon')
+      .appendTo(this.$screen);
+
+    this.$text = $('<div></div>')
+      .addClass('decision-screen-text')
+      .appendTo(this.$screen);
+
+    this.speech = new SpeechText();
+    this.$text.append(this.speech.$element);
+
+    this.titleI18n = new I18nTextAdapter((text) => {
+      this.$title.text(text);
+    }, this.lang);
+
+    this.titleI18n.setText(this.config.i18n.ui.decisionMade);
+
+    this.speechI18n = new I18nTextAdapter((text) => {
+      const { revealComplete } = this.speech;
+      this.speech.showText(textWithEmojisToSpeechLines(text));
+      if (revealComplete) {
+        this.speech.revealAll();
+      }
+    }, this.lang);
+    this.speech.events.on('complete', () => {
+      this.showContinue();
+    });
+
+    this.$continue = $('<div></div>')
+      .addClass(['waiting-text', 'waiting-text-decision-screen'])
+      .appendTo(this.$screen)
+      .hide();
+
+    this.$continueText = $('<span></span>')
+      .addClass('text')
+      .appendTo(this.$continue);
+
+    this.continueI18n = new I18nTextAdapter(
+      (text) => { this.$continueText.text(text); },
+      this.lang,
+      this.config.i18n.ui.pressToContinue
+    );
+
+    this.inclusionBar = new InclusionBar(this.config);
+    this.$screen.append($('<div></div>')
+      .addClass('inclusion-bar-wrapper')
+      .append(this.inclusionBar.$element));
+  }
+
+  showDecision(endingText, classes = [], inclusionTypes = []) {
+    this.$styleWrapper.removeClass();
+    this.$styleWrapper.addClass(classes);
+    this.$element.addClass('visible');
+    setTimeout(() => {
+      this.revealStarted = true;
+      this.speechI18n.setText(endingText, true);
+    }, 2000);
+    inclusionTypes.forEach((type) => this.inclusionBar.add(type));
+    fitParentWidth(this.inclusionBar.$element);
+  }
+
+  setLang(lang) {
+    this.lang = lang;
+    this.titleI18n.setLang(lang);
+    this.speechI18n.setLang(lang);
+    this.continueI18n.setLang(lang);
+  }
+
+  isTextRevealed() {
+    return this.speech.revealComplete;
+  }
+
+  revealText() {
+    this.speech.revealAll();
+  }
+
+  showContinue() {
+    this.$continue.show();
+  }
+}
+
+module.exports = DecisionScreen;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/view-html/dialogue-balloon.js":
+/*!**************************************************!*\
+  !*** ./src/js/lib/view-html/dialogue-balloon.js ***!
+  \**************************************************/
+/***/ ((module) => {
+
+class DialogueBalloon {
+  constructor(classes) {
+    this.$element = $('<div></div>')
+      .addClass('balloon')
+      .addClass(classes);
+    this.$styling = $('<div></div>')
+      .appendTo(this.$element);
+    this.$title = $('<div></div>')
+      .addClass('title')
+      .appendTo(this.$styling);
+  }
+
+  show() {
+    this.cancelHide();
+    this.$element.addClass('visible');
+  }
+
+  setTitle(title = null) {
+    if (title === null) {
+      this.$title.hide();
+    } else {
+      this.$title.html(title);
+    }
+  }
+
+  setClasses(classes) {
+    this.removeClasses();
+    this.$styling.addClass(classes);
+  }
+
+  removeClasses() {
+    this.$styling.removeClass();
+  }
+
+  hide() {
+    this.$element.addClass('fading');
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+    }
+    this.timeout = setTimeout(() => {
+      this.$element.removeClass('fading');
+      this.$element.removeClass('visible');
+      this.$element.removeClass('press-to-continue');
+    }, 250);
+  }
+
+  cancelHide() {
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+    }
+    this.$element.removeClass('fading');
+  }
+
+  showPressToContinue() {
+    this.$element.addClass('press-to-continue');
+  }
+
+  hidePressToContinue() {
+    this.$element.removeClass('press-to-continue');
+  }
+
+  empty() {
+    this.$element.empty();
+  }
+
+  append(element) {
+    this.$element.append(element);
+  }
+}
+
+module.exports = DialogueBalloon;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/view-html/dialogue-overlay.js":
+/*!**************************************************!*\
+  !*** ./src/js/lib/view-html/dialogue-overlay.js ***!
+  \**************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const EventEmitter = __webpack_require__(/*! events */ "./node_modules/events/events.js");
+const DialogueBalloon = __webpack_require__(/*! ./dialogue-balloon */ "./src/js/lib/view-html/dialogue-balloon.js");
+const SpeechText = __webpack_require__(/*! ./speech-text */ "./src/js/lib/view-html/speech-text.js");
+const { I18nTextAdapter } = __webpack_require__(/*! ../helpers/i18n */ "./src/js/lib/helpers/i18n.js");
+const { textWithEmojisToSpeechLines } = __webpack_require__(/*! ../helpers/emoji-utils */ "./src/js/lib/helpers/emoji-utils.js");
+
+class DialogueOverlay {
+  constructor(config, lang) {
+    this.config = config;
+    this.events = new EventEmitter();
+    this.lang = lang;
+
+    this.$element = $('<div></div>')
+      .addClass('dialogue-overlay');
+
+    this.balloonTop = new DialogueBalloon(['balloon-speech', 'top']);
+    this.$element.append(this.balloonTop.$element);
+    this.topTitleI18n = new I18nTextAdapter((text) => {
+      this.balloonTop.setTitle(text);
+    }, this.lang);
+
+    this.balloonBottom = new DialogueBalloon(['bottom']);
+    this.$element.append(this.balloonBottom.$element);
+
+    this.speechTop = new SpeechText();
+    this.balloonTop.append(this.speechTop.$element);
+    this.speechTop.events.on('complete', () => {
+      this.events.emit('speechComplete');
+    });
+    this.speechTopI18n = new I18nTextAdapter((text) => {
+      const { revealComplete } = this.speechTop;
+      this.speechTop.showText(textWithEmojisToSpeechLines(text));
+      if (revealComplete) {
+        this.speechTop.revealAll();
+      }
+    }, this.lang);
+
+    this.responseOptions = [];
+    this.selectedOption = 0;
+  }
+
+  setTopTitle(title) {
+    this.topTitleI18n.setText(title);
+  }
+
+  showSpeech(text, classes = null) {
+    this.balloonTop.show();
+    this.hidePressToContinue();
+    this.speechTop.clear();
+    this.speechTopI18n.setText(text, true);
+    this.balloonTop.removeClasses();
+    if (classes) {
+      this.balloonTop.setClasses(classes);
+    }
+  }
+
+  speedUpSpeech() {
+    this.speechTop.speedUp();
+  }
+
+  showResponseOptions(options) {
+    this.balloonBottom.empty();
+    this.balloonBottom.show();
+    this.selectedOption = 0;
+    this.responseOptions = Object.entries(options).map(([id, [text, classes]], i) => {
+      const label = $('<span></span>').addClass('text');
+      const element = $('<div></div>')
+        .addClass('response-option')
+        .addClass(classes)
+        .toggleClass('selected', i === this.selectedOption)
+        .append(label)
+        .appendTo(this.balloonBottom.$element);
+
+      const i18n = new I18nTextAdapter((newText) => {
+        label.text(newText);
+      }, this.lang, text);
+
+      return {
+        id,
+        element,
+        i18n,
+      };
+    });
+  }
+
+  setLang(lang) {
+    this.lang = lang;
+    this.topTitleI18n.setLang(lang);
+    this.speechTopI18n.setLang(lang);
+    this.responseOptions.forEach((option) => option.i18n.setLang(lang));
+  }
+
+  hideSpeech() {
+    this.balloonTop.hide();
+  }
+
+  hideResponseOptions() {
+    this.balloonBottom.hide();
+  }
+
+  hide() {
+    this.speechTop.clear();
+    this.hideSpeech();
+    this.hideResponseOptions();
+  }
+
+  selectResponseOption(index) {
+    this.selectedOption = Math.max(Math.min(index, this.responseOptions.length - 1), 0);
+    this.responseOptions.forEach((option, i) => option.element
+      .toggleClass('selected', i === this.selectedOption));
+  }
+
+  selectNextResponseOption() {
+    this.selectResponseOption(this.selectedOption + 1);
+  }
+
+  selectPreviousResponseOption() {
+    this.selectResponseOption(this.selectedOption - 1);
+  }
+
+  getSelectedResponseId() {
+    return this.responseOptions[this.selectedOption].id;
+  }
+
+  showPressToContinue() {
+    this.balloonTop.showPressToContinue();
+  }
+
+  hidePressToContinue() {
+    this.balloonTop.hidePressToContinue();
+  }
+}
+
+module.exports = DialogueOverlay;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/view-html/image-display-overlay.js":
+/*!*******************************************************!*\
+  !*** ./src/js/lib/view-html/image-display-overlay.js ***!
+  \*******************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const logger = __webpack_require__(/*! loglevel */ "./node_modules/loglevel/lib/loglevel.js");
+const imgPreload = __webpack_require__(/*! ../helpers-web/img-preload */ "./src/js/lib/helpers-web/img-preload.js");
+
+class ImageDisplayOverlay {
+  constructor(config, lang) {
+    this.config = config;
+    this.lang = lang;
+
+    this.$element = $('<div></div>')
+      .addClass('image-display-overlay');
+
+    this.$image = $('<div></div>')
+      .addClass('image')
+      .appendTo(this.$element);
+
+    this.imageSrc = null;
+    this.currOptions = null;
+    this.optionClasses = [];
+
+    window.ido = this;
+  }
+
+  getLocalImageSrc() {
+    if (typeof this.imageSrc === 'string') {
+      return this.imageSrc;
+    }
+    if (typeof this.imageSrc === 'object') {
+      return this.imageSrc[this.lang] ?? this.imageSrc.en;
+    }
+    return null;
+  }
+
+  setLang(lang) {
+    this.lang = lang;
+    if (this.imageSrc) {
+      this.replaceSrc();
+    }
+  }
+
+  async replaceSrc() {
+    this.localSrc = this.getLocalImageSrc();
+    const thisCallSrc = this.localSrc;
+    return imgPreload(this.localSrc, this.currOptions.imageLoadTimeout)
+      .then(() => {
+        if (this.localSrc === thisCallSrc) {
+          this.$image.css('background-image', `url(${this.localSrc})`);
+          return true;
+        }
+        return false;
+      })
+      .catch((err) => {
+        logger.error(err);
+      });
+  }
+
+  async showImage(src, options) {
+    this.clear();
+    this.currOptions = { ...ImageDisplayOverlay.defaultOptions, ...options };
+    this.imageSrc = src;
+    return this.replaceSrc().then((replacedSrc) => {
+      if (replacedSrc) {
+        this.$image.css('animation-duration', `${this.currOptions.enterAnimationDuration}ms`);
+        this.$image.addClass('shown');
+        this.optionClasses.push(`size-${this.currOptions.size}`);
+        this.$image.addClass(this.optionClasses);
+      }
+    });
+  }
+
+  hideImage(exitAnimationDuration = 500) {
+    this.$image.css('animation-duration', `${exitAnimationDuration}ms`);
+    this.$image.addClass('hidden');
+  }
+
+  clear() {
+    this.$image.removeClass('shown');
+    this.$image.removeClass('hidden');
+    this.$image.removeClass(this.optionClasses);
+    this.$image.css('background-image', '');
+    this.imageSrc = null;
+    this.currOptions = null;
+    this.optionClasses = [];
+  }
+}
+
+ImageDisplayOverlay.defaultOptions = {
+  size: 'full',
+  imageLoadTimeout: 3000,
+  enterAnimationDuration: 500,
+};
+
+module.exports = ImageDisplayOverlay;
+
+
+/***/ }),
+
 /***/ "./src/js/lib/view-html/inclusion-bar.js":
 /*!***********************************************!*\
   !*** ./src/js/lib/view-html/inclusion-bar.js ***!
@@ -42997,72 +46535,517 @@ module.exports = InclusionBar;
 
 /***/ }),
 
-/***/ "./src/js/lib/view-html/multi-text-scroller.js":
-/*!*****************************************************!*\
-  !*** ./src/js/lib/view-html/multi-text-scroller.js ***!
-  \*****************************************************/
+/***/ "./src/js/lib/view-html/intro-screen.js":
+/*!**********************************************!*\
+  !*** ./src/js/lib/view-html/intro-screen.js ***!
+  \**********************************************/
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-const TextScroller = __webpack_require__(/*! ./text-scroller */ "./src/js/lib/view-html/text-scroller.js");
+const EventEmitter = __webpack_require__(/*! events */ "./node_modules/events/events.js");
+const SpeechText = __webpack_require__(/*! ./speech-text */ "./src/js/lib/view-html/speech-text.js");
+const { I18nTextAdapter } = __webpack_require__(/*! ../helpers/i18n */ "./src/js/lib/helpers/i18n.js");
+const { textWithEmojisToSpeechLines } = __webpack_require__(/*! ../helpers/emoji-utils */ "./src/js/lib/helpers/emoji-utils.js");
+const InclusionBar = __webpack_require__(/*! ./inclusion-bar */ "./src/js/lib/view-html/inclusion-bar.js");
+const { fitParentWidth } = __webpack_require__(/*! ../helpers-web/fit-parent */ "./src/js/lib/helpers-web/fit-parent.js");
 
-class MultiTextScroller {
-  constructor(config) {
+class IntroScreen {
+  constructor(config, lang) {
     this.config = config;
+    this.events = new EventEmitter();
+    this.lang = lang;
+
     this.$element = $('<div></div>')
-      .addClass('multi-text-scroller');
-    this.scrollers = [];
-    this.speed = this.config?.map?.promptScrollSpeed || 100; // px per second
-  }
+      .addClass('intro-screen-wrapper');
 
-  destroy() {
-    this.clear();
-  }
+    this.$styleWrapper = $('<div></div>')
+      .appendTo(this.$element);
 
-  clear() {
-    this.scrollers.forEach((s) => { s.$element.remove(); s.destroy(); });
-    this.scrollers = [];
-  }
+    this.$screen = $('<div></div>')
+      .addClass('intro-screen')
+      .appendTo(this.$styleWrapper);
 
-  displayText(text) {
-    this.clear();
+    this.$text = $('<div></div>')
+      .addClass('intro-screen-text')
+      .appendTo(this.$screen);
 
-    this.config.game.languages.forEach((lang) => {
-      const t = text?.[lang];
-      if (t) {
-        this.createScroller(t, lang);
+    this.speech = new SpeechText();
+    this.$text.append(this.speech.$element);
+
+    this.speechI18n = new I18nTextAdapter((text) => {
+      const { revealComplete } = this.speech;
+      this.speech.showText(textWithEmojisToSpeechLines(text));
+      if (revealComplete) {
+        this.speech.revealAll();
       }
+    }, this.lang);
+    this.speech.events.on('complete', () => {
+      this.showContinue();
     });
 
-    if (this.scrollers.length > 0) {
-      this.scrollers[0].speed = this.speed;
-      this.scrollers.forEach((scroller, i) => {
-        if (i > 0) {
-          scroller.speed = this.speed * (
-            scroller.texts[0].width() / this.scrollers[0].texts[0].width()
-          );
-        }
-      });
-    }
+    this.$continue = $('<div></div>')
+      .addClass(['waiting-text', 'waiting-text-decision-screen'])
+      .appendTo(this.$screen)
+      .hide();
+
+    this.$continueText = $('<span></span>')
+      .addClass('text')
+      .appendTo(this.$continue);
+
+    this.continueI18n = new I18nTextAdapter(
+      (text) => { this.$continueText.text(text); },
+      this.lang,
+      this.config.i18n.ui.pressToContinue
+    );
+
+    this.inclusionBar = new InclusionBar(this.config);
+    this.$screen.append($('<div></div>')
+      .addClass('inclusion-bar-wrapper')
+      .append(this.inclusionBar.$element));
   }
 
-  createScroller(text, lang) {
-    const scroller = new TextScroller(this.config, lang);
-    this.$element.append(scroller.$element);
-    this.scrollers.push(scroller);
-    scroller.displayText(text);
-    return scroller;
+  showIntro(introText, classes = [], inclusionTypes = []) {
+    this.$styleWrapper.removeClass();
+    this.$styleWrapper.addClass(classes);
+    this.inclusionBar.clear();
+    this.$element.addClass('visible');
+    setTimeout(() => {
+      this.revealStarted = true;
+      this.speechI18n.setText(introText, true);
+      inclusionTypes.forEach((type) => this.inclusionBar.add(type));
+      fitParentWidth(this.inclusionBar.$element);
+    }, 0);
   }
 
-  start() {
-    this.scrollers.forEach((s) => { s.start(); });
+  setLang(lang) {
+    this.lang = lang;
+    this.speechI18n.setLang(lang);
+    this.continueI18n.setLang(lang);
   }
 
-  stop() {
-    this.scrollers.forEach((s) => { s.stop(); });
+  isTextRevealed() {
+    return this.speech.revealComplete;
+  }
+
+  revealText() {
+    this.speech.revealAll();
+  }
+
+  showContinue() {
+    this.$continue.show();
   }
 }
 
-module.exports = MultiTextScroller;
+module.exports = IntroScreen;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/view-html/player-overlay-mgr.js":
+/*!****************************************************!*\
+  !*** ./src/js/lib/view-html/player-overlay-mgr.js ***!
+  \****************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const { I18nTextAdapter } = __webpack_require__(/*! ../helpers/i18n */ "./src/js/lib/helpers/i18n.js");
+const Countdown = __webpack_require__(/*! ./countdown */ "./src/js/lib/view-html/countdown.js");
+const QuestOverlay = __webpack_require__(/*! ./quest-overlay */ "./src/js/lib/view-html/quest-overlay.js");
+const TextScreen = __webpack_require__(/*! ./text-screen */ "./src/js/lib/view-html/text-screen.js");
+const ImageDisplayOverlay = __webpack_require__(/*! ./image-display-overlay */ "./src/js/lib/view-html/image-display-overlay.js");
+const DialogueOverlay = __webpack_require__(/*! ./dialogue-overlay */ "./src/js/lib/view-html/dialogue-overlay.js");
+const ScoringOverlay = __webpack_require__(/*! ./scoring-overlay */ "./src/js/lib/view-html/scoring-overlay.js");
+const TitleOverlay = __webpack_require__(/*! ./title-overlay */ "./src/js/lib/view-html/title-overlay.js");
+const IntroScreen = __webpack_require__(/*! ./intro-screen */ "./src/js/lib/view-html/intro-screen.js");
+const DecisionScreen = __webpack_require__(/*! ./decision-screen */ "./src/js/lib/view-html/decision-screen.js");
+const ScoreCounterOverlay = __webpack_require__(/*! ./score-counter-overlay */ "./src/js/lib/view-html/score-counter-overlay.js");
+const ScoreCounterAdapter = __webpack_require__(/*! ../adapters/score-counter-adapter */ "./src/js/lib/adapters/score-counter-adapter.js");
+
+class PlayerOverlayManager {
+  constructor(config, lang, playerId, flags) {
+    this.config = config;
+    this.lang = lang;
+    this.playerId = playerId;
+    this.flags = flags;
+
+    const width = this.config?.game?.playerAppWidth ?? 1024;
+    const height = this.config?.game?.playerAppHeight ?? 768;
+    this.screenRatio = width / height;
+    this.fontRatio = this.config?.game?.playerAppFontRatio ?? 0.0175;
+
+    this.$element = $('<div></div>')
+      .addClass('player-app')
+      .addClass(`player-${playerId}`);
+
+    this.$pixiWrapper = $('<div></div>')
+      .addClass('pixi-wrapper')
+      .appendTo(this.$element);
+
+    this.imageDisplayOverlay = new ImageDisplayOverlay(this.config, this.lang);
+    this.$element.append(this.imageDisplayOverlay.$element);
+
+    this.$storylineBar = $('<div></div>')
+      .addClass('storyline-bar')
+      .appendTo(this.$element)
+      .hide();
+
+    this.$decisionLabel = $('<div></div>')
+      .addClass('decision-label')
+      .appendTo(this.$storylineBar);
+
+    this.decisionLabelI18n = new I18nTextAdapter((text) => {
+      this.$decisionLabel.html(text);
+    }, this.lang);
+
+    this.introScreen = null;
+    this.endingScreen = null;
+
+    this.countdown = new Countdown();
+    this.countdown.$element.appendTo(this.$element);
+    this.countdown.hide();
+
+    this.questOverlay = new QuestOverlay(this.config, this.lang);
+    this.$element.append(this.questOverlay.$element);
+
+    this.textScreen = new TextScreen(this.config, this.lang);
+    this.$element.append(this.textScreen.$element);
+
+    this.dialogueOverlay = new DialogueOverlay(this.config, this.lang);
+    this.$element.append(this.dialogueOverlay.$element);
+
+    if (this.config.game.scoreCounter) {
+      const options = this.config.game.scoreCounter;
+      this.scoreCounterOverlay = new ScoreCounterOverlay(
+        this.config,
+        options.categories.map((category) => category.id)
+      );
+      this.$element.append(this.scoreCounterOverlay.$element);
+      this.scoreCounterAdapter = new ScoreCounterAdapter(
+        options,
+        this.flags,
+        this.scoreCounterOverlay
+      );
+    }
+
+    this.scoringOverlay = new ScoringOverlay(this.config, this.lang);
+    this.$element.append(this.scoringOverlay.$element);
+
+    this.titleOverlay = new TitleOverlay(this.config, this.lang);
+    this.$element.append(this.titleOverlay.$element);
+
+    $(window).on('resize', () => {
+      this.handleResize();
+    });
+  }
+
+  refresh() {
+    this.handleResize();
+  }
+
+  handleResize() {
+    this.$element.fillWithAspect(this.screenRatio);
+    this.$element.css('font-size', `${(this.$element.width() * this.fontRatio).toFixed(3)}px`);
+  }
+
+  setLang(lang) {
+    this.lang = lang;
+
+    this.titleOverlay.setLang(this.lang);
+    this.imageDisplayOverlay.setLang(this.lang);
+    this.dialogueOverlay.setLang(this.lang);
+    this.textScreen.setLang(this.lang);
+    this.questOverlay.setLang(this.lang);
+    this.decisionLabelI18n.setLang(this.lang);
+    this.scoringOverlay.setLang(this.lang);
+    if (this.introScreen) {
+      this.introScreen.setLang(this.lang);
+    }
+    if (this.endingScreen) {
+      this.endingScreen.setLang(this.lang);
+    }
+  }
+
+  showTitleScreen() {
+    this.titleOverlay.show();
+  }
+
+  hideTitleScreen() {
+    this.titleOverlay.hide();
+  }
+
+  showIntroScreen(introText, inclusions) {
+    this.hideIntroScreen();
+    this.introScreen = new IntroScreen(this.config, this.lang);
+    this.$element.append(this.introScreen.$element);
+    this.introScreen.showIntro(introText, [], inclusions);
+  }
+
+  hideIntroScreen() {
+    if (this.introScreen) {
+      this.introScreen.$element.remove();
+      this.introScreen = null;
+    }
+  }
+
+  showDefaultPrompt() {
+    this.questOverlay.showPrompt({ text: this.config?.i18n?.ui?.defaultPrompt || '' });
+  }
+
+  showQuestPrompt(promptText, counter = null) {
+    this.questOverlay.showPrompt({
+      text: promptText,
+      counter,
+      withCheckmark: true,
+    });
+  }
+
+  changeQuestPromptText(promptText) {
+    this.questOverlay.updatePrompt({ text: promptText });
+  }
+
+  setQuestStageCounter(count) {
+    this.questOverlay.setCounter(count);
+  }
+
+  markStageDone() {
+    this.questOverlay.markDone();
+  }
+
+  markQuestDone() {
+    this.questOverlay.markDone(1500, 500);
+  }
+
+  showEndingScreen(endingText, classes, inclusionTypes) {
+    this.endingScreen = new DecisionScreen(this.config, this.lang);
+    this.$element.append(this.endingScreen.$element);
+    this.endingScreen.showDecision(endingText, classes, inclusionTypes);
+  }
+
+  hideEndingScreen() {
+    if (this.endingScreen) {
+      this.endingScreen.$element.remove();
+      this.endingScreen = null;
+    }
+  }
+
+  showTextScreen(text) {
+    this.textScreen.setText(text);
+    this.textScreen.show();
+  }
+
+  hideTextScreen() {
+    this.textScreen.hide();
+    this.textScreen.setText('');
+  }
+}
+
+module.exports = PlayerOverlayManager;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/view-html/quest-overlay-panel.js":
+/*!*****************************************************!*\
+  !*** ./src/js/lib/view-html/quest-overlay-panel.js ***!
+  \*****************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const { I18nTextAdapter } = __webpack_require__(/*! ../helpers/i18n */ "./src/js/lib/helpers/i18n.js");
+const { textWithEmojisToHtml } = __webpack_require__(/*! ../helpers/emoji-utils */ "./src/js/lib/helpers/emoji-utils.js");
+
+class QuestOverlayPanel {
+  constructor(config, lang) {
+    this.config = config;
+    this.lang = lang;
+
+    this.$element = $('<div></div>')
+      .addClass('quest-overlay', 'visible');
+
+    this.$prompt = $('<div></div>')
+      .addClass('prompt')
+      .appendTo(this.$element);
+
+    this.promptI18n = new I18nTextAdapter((newText) => {
+      this.$prompt.html(textWithEmojisToHtml(newText));
+    }, this.lang);
+
+    this.$counter = $('<div></div>')
+      .addClass('counter')
+      .appendTo(this.$element);
+  }
+
+  setLang(lang) {
+    this.lang = lang;
+    this.promptI18n.setLang(lang);
+  }
+
+  show() {
+    this.$element.addClass('visible');
+    this.$element.removeClass('hidden');
+  }
+
+  hide() {
+    this.$element.removeClass('visible');
+    this.$element.addClass('hidden');
+  }
+
+  reset() {
+    this.promptI18n.setText('');
+    this.clearCounter();
+    this.hideCheckmark();
+  }
+
+  isVisible() {
+    return this.$element.hasClass('visible');
+  }
+
+  setText(text) {
+    this.promptI18n.setText(text);
+  }
+
+  clearCounter() {
+    this.$counter.empty();
+    this.$counter.hide();
+  }
+
+  createCounter(counter) {
+    const { max, icon } = counter;
+    this.$counter.show();
+    for (let i = 0; i < max; i += 1) {
+      $('<span></span>')
+        .addClass('counter-item')
+        .addClass(icon)
+        .appendTo(this.$counter);
+    }
+  }
+
+  setCounter(value) {
+    this.$counter.children().each((index, element) => {
+      $(element).toggleClass('active', index < value);
+    });
+  }
+
+  showCheckmark() {
+    this.$element.addClass('with-checkmark');
+  }
+
+  hideCheckmark() {
+    this.$element.removeClass(['with-checkmark', 'with-checkmark-checked']);
+  }
+
+  checkCheckmark() {
+    if (this.$element.hasClass('with-checkmark')) {
+      this.$element.addClass('with-checkmark-checked');
+    }
+  }
+}
+
+module.exports = QuestOverlayPanel;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/view-html/quest-overlay.js":
+/*!***********************************************!*\
+  !*** ./src/js/lib/view-html/quest-overlay.js ***!
+  \***********************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const UIQueue = __webpack_require__(/*! ./ui-queue */ "./src/js/lib/view-html/ui-queue.js");
+const QuestOverlayPanel = __webpack_require__(/*! ./quest-overlay-panel */ "./src/js/lib/view-html/quest-overlay-panel.js");
+
+const HIDE_PROMPT_DURATION = 500;
+const SHOW_PROMPT_DURATION = 1250;
+const COUNTER_UPDATE_DURATION = 1250;
+const MARK_DONE_DURATION = 1250;
+
+class QuestOverlay {
+  constructor(config, lang) {
+    this.config = config;
+    this.lang = lang;
+
+    this.uiQueue = new UIQueue();
+
+    this.panel = new QuestOverlayPanel(config, lang);
+    this.$element = this.panel.$element;
+    this.currentPromptOptions = null;
+    this.currentCount = null;
+  }
+
+  setLang(lang) {
+    this.lang = lang;
+    this.panel.setLang(lang);
+  }
+
+  hide() {
+    this.uiQueue.cancel();
+    this.panel.hide();
+  }
+
+  showPrompt(options) {
+    if (this.currentPromptOptions?.text === options?.text) {
+      return;
+    }
+    this.currentPromptOptions = options;
+    const {
+      text,
+      counter,
+      keepCount,
+      initialCount,
+      withCheckmark,
+    } = { ...QuestOverlay.defaultPromptOptions, ...options };
+
+    this.uiQueue.add(() => {
+      this.panel.hide();
+    }, () => (this.panel.isVisible() ? HIDE_PROMPT_DURATION : 0));
+
+    this.currentCount = (keepCount && this.currentCount) ? this.currentCount : initialCount;
+    if (text) {
+      this.uiQueue.add(() => {
+        this.panel.reset();
+        this.panel.setText(text);
+
+        if (withCheckmark) {
+          this.panel.showCheckmark();
+        }
+        if (counter) {
+          this.panel.createCounter(counter);
+          this.panel.setCounter(this.currentCount);
+        }
+        this.panel.show();
+      }, SHOW_PROMPT_DURATION);
+    }
+  }
+
+  updatePrompt(changedOptions) {
+    const options = { ...this.currentPromptOptions, keepCount: true, ...changedOptions };
+    this.showPrompt(options);
+  }
+
+  setCounter(count) {
+    this.currentCount = count;
+    this.uiQueue.add(() => {
+      this.panel.setCounter(count);
+    }, COUNTER_UPDATE_DURATION);
+  }
+
+  markDone(duration = MARK_DONE_DURATION, initialDelay = 0) {
+    if (initialDelay) {
+      this.uiQueue.addPause(initialDelay);
+    }
+    this.uiQueue.add(() => {
+      this.panel.checkCheckmark();
+    }, duration);
+  }
+}
+
+QuestOverlay.defaultPromptOptions = {
+  text: '',
+  counter: null,
+  withCheckmark: false,
+  keepCount: false,
+  initialCount: 0,
+};
+
+module.exports = QuestOverlay;
 
 
 /***/ }),
@@ -43126,110 +47109,456 @@ module.exports = ScoreCounterOverlay;
 
 /***/ }),
 
-/***/ "./src/js/lib/view-html/text-scroller.js":
-/*!***********************************************!*\
-  !*** ./src/js/lib/view-html/text-scroller.js ***!
-  \***********************************************/
-/***/ ((module) => {
+/***/ "./src/js/lib/view-html/scoring-overlay.js":
+/*!*************************************************!*\
+  !*** ./src/js/lib/view-html/scoring-overlay.js ***!
+  \*************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-/* globals PIXI */
+const UIQueue = __webpack_require__(/*! ./ui-queue */ "./src/js/lib/view-html/ui-queue.js");
+const { I18nTextAdapter } = __webpack_require__(/*! ../helpers/i18n */ "./src/js/lib/helpers/i18n.js");
 
-const MAX_TEXTS = 10;
-
-class TextScroller {
-  constructor(config, id = null) {
+class ScoringOverlay {
+  constructor(config, lang) {
     this.config = config;
+    this.lang = lang;
+    this.uiQueue = new UIQueue();
     this.$element = $('<div></div>')
-      .addClass('text-scroller');
-    if (id) {
-      this.$element.addClass(`text-scroller-${id}`);
-    }
-    this.texts = [];
-    this.speed = 75; // px per second
-    this.ticker = this.ticker.bind(this);
+      .addClass('scoring-overlay');
+    this.activeTitle = null;
   }
 
-  destroy() {
-    this.stop();
-    this.clear();
+  showAchievement(type) {
+    this.uiQueue.add(() => {
+      $('<div></div>')
+        .addClass('achievement')
+        .addClass(`achievement-${type}`)
+        .css('background-image', `url(static/icons/stats-${type}.svg)`)
+        .appendTo(this.$element);
+    }, 2000);
+    this.uiQueue.add(() => {
+      this.clear();
+    });
+  }
+
+  showInclusion(type) {
+    this.uiQueue.add(() => {
+      const $titleElement = $('<div></div>')
+        .addClass('inclusion-title')
+        .text(this.config?.i18n?.inclusion?.[type] || '');
+
+      this.activeTitle = new I18nTextAdapter((newText) => {
+        $titleElement.html(newText);
+      }, this.lang, this.config.i18n.ui.includedInDecision);
+
+      $('<div></div>')
+        .addClass('inclusion')
+        .addClass(`inclusion-${type}`)
+        .append($titleElement)
+        .append($('<div></div>')
+          .addClass('inclusion-image-container')
+          .append($('<div></div>')
+            .addClass('inclusion-image')
+            .css('background-image', `url(/static/inclusion/${type}.svg)`)))
+        .appendTo(this.$element);
+    }, 2500);
+    this.uiQueue.add(() => {
+      this.clear();
+    });
   }
 
   clear() {
-    this.texts.forEach((t) => { t.remove(); });
-    this.texts = [];
+    this.$element.empty();
+    this.activeTitle = null;
   }
 
-  displayText(text) {
-    this.clear();
-    const $text = $('<div></div>')
-      .addClass('text')
-      .html(text);
-    this.$element.append($text);
-    this.texts.push($text);
-    // Measure the text width against the container width.
-    // Create as many copies of the text as needed to fill the container.
-    const containerWidth = this.$element.width();
-    const textWidth = $text.width();
-    const textCount = Math.min(Math.ceil(containerWidth / textWidth), MAX_TEXTS);
-    for (let i = 0; i < textCount; i += 1) {
-      const $textCopy = $text.clone();
-      this.$element.append($textCopy);
-      this.texts.push($textCopy);
+  setLang(code) {
+    this.lang = code;
+    if (this.activeTitle) {
+      this.activeTitle.setLang(code);
     }
-    // Place the first text on the left edge of the container.
-    // and each subsequent text to the right of the previous one.
-    this.scrollTexts(0);
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  moveSingleText($text, left) {
-    $text.data('left', left);
-    $text.css('left', `${left}px`);
-  }
-
-  scrollTexts(distance) {
-    // Move the first text by the distance
-    this.moveSingleText(this.texts[0], (this.texts[0].data('left') || 0) - distance);
-    // Move each text to the right of the previous one.
-    // This might seem wasteful, but when the webfont finishes loading,
-    // the text width might change, so we need to re-measure the text width.
-    // This is not optimal, but it's good enough for now.
-    this.texts.forEach(($t, i) => {
-      if (i > 0) {
-        const previousText = this.texts[i - 1];
-        this.moveSingleText($t, previousText.data('left') + previousText.outerWidth());
-      }
-    });
-    // If a text has moved off the left edge of the container,
-    // move it to the right edge of rightmost text.
-    while (this.texts[0].data('left') + this.texts[0].width() < 0) {
-      const leftmostText = this.texts.shift();
-      const rightmostText = this.texts[this.texts.length - 1];
-      const newLeft = parseInt(rightmostText.css('left'), 10) + rightmostText.width();
-      this.moveSingleText(leftmostText, newLeft);
-      this.texts.push(leftmostText);
-    }
-  }
-
-  start() {
-    PIXI.Ticker.shared.add(this.ticker);
-  }
-
-  stop() {
-    PIXI.Ticker.shared.remove(this.ticker);
-  }
-
-  ticker(time) {
-    // Elapsed seconds
-    const elapsed = time / PIXI.settings.TARGET_FPMS / 1000;
-    // Distance to move
-    const distance = elapsed * this.speed;
-    // Scroll the texts
-    this.scrollTexts(distance);
   }
 }
 
-module.exports = TextScroller;
+module.exports = ScoringOverlay;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/view-html/speech-text.js":
+/*!*********************************************!*\
+  !*** ./src/js/lib/view-html/speech-text.js ***!
+  \*********************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+/**
+ * Copyright (c) 2023 by Drew Conley (https://codepen.io/punkydrewster713/pen/zYKdywP)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+ * and associated documentation files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge, publish, distribute,
+ * sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or
+ * substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+ * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Modified by Eric Londaits for IMAGINARY gGmbH.
+ * Copyright (c) 2023 IMAGINARY gGmbH
+ */
+const EventEmitter = __webpack_require__(/*! events */ "./node_modules/events/events.js");
+
+class SpeechText {
+  constructor() {
+    this.$element = $('<div></div>')
+      .addClass('speech-text');
+
+    this.isSpace = /\s/;
+    this.timedReveal = this.timedReveal.bind(this);
+    this.revealCharacterTimeout = null;
+    this.events = new EventEmitter();
+    this.speedFactor = 1;
+    this.revealComplete = false;
+  }
+
+  /**
+   * Private method to reveal a character
+   *
+   * @private
+   * @param {Object} character
+   * @param {HTMLElement} character.span
+   * @param {Array} character.classes
+   */
+  // eslint-disable-next-line class-methods-use-this
+  revealCharacter(character) {
+    character.span.classList.add('revealed');
+    character.classes.forEach((c) => {
+      character.span.classList.add(c);
+    });
+  }
+
+  /**
+   * Private method to reveal a list of characters with a delay between each
+   *
+   * @private
+   * @param {Array} list Array of characters with the following properties:
+   * - span {HTMLElement} The span $element to be revealed
+   * - isSpace {Boolean} Whether the character is a space
+   * - delayAfter {Number} Delay after the character is revealed
+   * - classes {Array} Array of classes to be added to the character
+   * - stop {Boolean} Whether to stop after the character
+   */
+  timedReveal(list) {
+    const next = list.splice(0, 1)[0];
+    this.revealCharacter(next);
+    const delay = next.isSpace && !next.pause ? 0 : next.delayAfter;
+
+    if (list.length > 0) {
+      this.revealCharacterTimeout = setTimeout(() => {
+        this.timedReveal(list);
+      }, delay * this.speedFactor);
+    } else {
+      this.onComplete();
+    }
+  }
+
+  addCharacter(character, line) {
+    const span = document.createElement('span');
+    span.textContent = character;
+    span.classList.add(...(line.preClasses || []));
+    if (character === '\n') {
+      this.$element.append($('<div>').addClass('break'));
+    } else {
+      this.$element.append(span);
+      this.characters.push({
+        span,
+        isSpace: this.isSpace.test(character) && !line.pause,
+        delayAfter: line.speed || SpeechText.Speeds.normal,
+        classes: line.classes || [],
+      });
+    }
+  }
+
+  /**
+   * Set the text to be displayed
+   *
+   * @param lines {Array} Array of objects with the following properties:
+   * - speed {Number} (optional) Speed of the text in milliseconds
+   * - string {String} Text to be displayed
+   * - preClasses {Array} (optional) Array of classes to be added to the text
+   * - classes {Array} (optional) Array of classes to be added to the text as it is revealed
+   * - stop {Boolean} (optional) Whether or not to stop after the line
+   */
+  showText(lines) {
+    this.clear();
+
+    this.characters = [];
+    lines.forEach((line, index) => {
+      if (line.noSplit) {
+        this.addCharacter(line.string, line);
+      } else {
+        if (index < lines.length - 1) {
+          line.string += ' '; // Add a space between lines
+        }
+        line.string.split('').forEach((character) => {
+          this.addCharacter(character, line);
+        });
+      }
+    });
+
+    this.resume();
+  }
+
+  /**
+   * Stop the reveal of the text
+   */
+  stop() {
+    clearTimeout(this.revealCharacterTimeout);
+    this.speedFactor = 1;
+  }
+
+  /**
+   * Resume the reveal of the text
+   */
+  resume() {
+    clearTimeout(this.revealCharacterTimeout);
+    this.revealCharacterTimeout = setTimeout(() => {
+      this.timedReveal(this.characters);
+    }, 600);
+  }
+
+  /**
+   * Clear the text
+   */
+  clear() {
+    this.stop();
+    this.$element.empty();
+    this.revealComplete = false;
+  }
+
+  /**
+   * Reveal all characters immediately
+   */
+  revealAll() {
+    this.stop();
+    this.characters.forEach((c) => {
+      this.revealCharacter(c);
+    });
+    this.onComplete();
+  }
+
+  speedUp() {
+    this.speedFactor = 0.2;
+  }
+
+  onComplete() {
+    this.revealComplete = true;
+    this.events.emit('complete');
+  }
+}
+
+SpeechText.Speeds = {
+  pause: 500,
+  slow: 120,
+  normal: 60,
+  fast: 40,
+  superFast: 10,
+};
+
+module.exports = SpeechText;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/view-html/text-screen.js":
+/*!*********************************************!*\
+  !*** ./src/js/lib/view-html/text-screen.js ***!
+  \*********************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const { I18nTextAdapter } = __webpack_require__(/*! ../helpers/i18n */ "./src/js/lib/helpers/i18n.js");
+
+class TextScreen {
+  constructor(config, lang) {
+    this.config = config;
+    this.lang = lang;
+
+    this.$element = $('<div></div>')
+      .addClass('text-screen');
+    this.$textWrapper = $('<div></div>')
+      .addClass('text-wrapper')
+      .appendTo(this.$element);
+    this.$text = $('<div></div>')
+      .addClass('text')
+      .appendTo(this.$textWrapper);
+
+    this.textI18n = new I18nTextAdapter((text) => {
+      this.$text.text(text);
+    }, this.lang);
+  }
+
+  setText(text) {
+    this.textI18n.setText(text);
+  }
+
+  setLang(lang) {
+    this.lang = lang;
+    this.textI18n.setLang(lang);
+  }
+
+  show() {
+    this.$element.addClass('visible');
+  }
+
+  hide() {
+    this.$element.removeClass('visible');
+  }
+}
+
+module.exports = TextScreen;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/view-html/title-overlay.js":
+/*!***********************************************!*\
+  !*** ./src/js/lib/view-html/title-overlay.js ***!
+  \***********************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const { I18nTextAdapter } = __webpack_require__(/*! ../helpers/i18n */ "./src/js/lib/helpers/i18n.js");
+
+class TitleOverlay {
+  constructor(config, lang) {
+    this.config = config;
+    this.lang = lang;
+
+    this.$element = $('<div></div>')
+      .addClass('title-overlay');
+
+    this.$title = $('<h1></h1>')
+      .addClass('logo')
+      .appendTo(this.$element);
+
+    this.$pressStart = $('<div></div>')
+      .addClass('press-start')
+      .appendTo(this.$element);
+
+    this.$pressStartFrame = $('<div></div>')
+      .addClass('frame')
+      .appendTo(this.$pressStart);
+
+    this.$pressStartText = $('<div></div>')
+      .addClass('text')
+      .appendTo(this.$pressStartFrame);
+
+    this.titleI18n = new I18nTextAdapter((newText) => {
+      this.$title.text(newText);
+    }, this.lang, this.config.i18n.ui.title);
+
+    this.promptI18n = new I18nTextAdapter((newText) => {
+      this.$pressStartText.text(newText);
+    }, this.lang, this.config.i18n.ui.pressStart);
+  }
+
+  setLang(lang) {
+    this.lang = lang;
+    this.titleI18n.setLang(lang);
+    this.promptI18n.setLang(lang);
+  }
+
+  show() {
+    this.$element.addClass('visible');
+  }
+
+  hide() {
+    this.$element.removeClass('visible');
+  }
+}
+
+module.exports = TitleOverlay;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/view-html/ui-queue.js":
+/*!******************************************!*\
+  !*** ./src/js/lib/view-html/ui-queue.js ***!
+  \******************************************/
+/***/ ((module) => {
+
+/**
+ * A queue for executing UI transitions serially.
+ *
+ * This queue allows for multiple UI transitions to be queued up, and executed one after the other.
+ * Each transition is specified as a callback and a minimum duration to wait after executing it.
+ */
+class UIQueue {
+  constructor() {
+    this.items = [];
+    this.timeout = null;
+  }
+
+  /**
+   * Add a callback to the queue.
+   *
+   * The callback will be executed immediately, or if a previously added callback is still
+   * executing, it will be executed after the previous callback has finished.
+   *
+   * @param {function} callback
+   *  The callback to add to the queue.
+   * @param {number|function} [duration=0]
+   *  The duration to wait after executing the callback. If a function is provided, it will be
+   *  called (right before executing the callback) to determine the duration.
+   */
+  add(callback, duration = 0) {
+    this.items.push({
+      callback,
+      duration,
+    });
+
+    if (this.timeout === null) {
+      this.next();
+    }
+  }
+
+  addPause(duration) {
+    this.add(() => {}, duration);
+  }
+
+  /**
+   * Stop and empty the queue.
+   */
+  cancel() {
+    clearTimeout(this.timeout);
+    this.timeout = null;
+    this.items = [];
+  }
+
+  /**
+   * Execute the next callback in the queue.
+   * @private
+   */
+  next() {
+    if (this.items.length === 0) {
+      this.timeout = null;
+      return;
+    }
+
+    const item = this.items.shift();
+    const duration = typeof item.duration === 'function' ? item.duration() : item.duration;
+    item.callback();
+    this.timeout = setTimeout(this.next.bind(this), duration);
+  }
+}
+
+module.exports = UIQueue;
 
 
 /***/ }),
@@ -43413,64 +47742,742 @@ module.exports = CollisionMap;
 
 /***/ }),
 
-/***/ "./src/js/lib/view-pixi/map-marker.js":
+/***/ "./src/js/lib/view-pixi/demo-drone.js":
 /*!********************************************!*\
-  !*** ./src/js/lib/view-pixi/map-marker.js ***!
+  !*** ./src/js/lib/view-pixi/demo-drone.js ***!
   \********************************************/
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 /* globals PIXI */
-const { Popper } = __webpack_require__(/*! ../helpers-pixi/tween */ "./src/js/lib/helpers-pixi/tween.js");
 
-class MapMarker {
-  constructor(texture, contentTexture, anchor = null) {
-    this.destroyed = false;
-    this.display = new PIXI.Container();
-    this.markerDisplay = new PIXI.Sprite(texture);
-    this.display.addChild(this.markerDisplay);
-    this.contentDisplay = new PIXI.Sprite(contentTexture);
-    this.markerDisplay.addChild(this.contentDisplay);
-    this.contentDisplay.anchor.set(0.5, 0.5);
-    this.contentDisplay.position
-      .set(0, -this.markerDisplay.height + this.contentDisplay.height / 2 - 1.5);
-    this.markerDisplay.anchor.set(anchor ? anchor.x : 0, anchor ? anchor.y : 0);
-    this.markerDisplay.visible = false;
-    this.markerDisplay.scale = 0;
-    this.popper = Popper(this.markerDisplay);
-  }
+const { shuffleArray } = __webpack_require__(/*! ../helpers/shuffle */ "./src/js/lib/helpers/shuffle.js");
 
-  destroy() {
-    this.destroyed = true;
-    this.popper.destroy();
-    this.display.destroy({ children: true });
-  }
+const SPEED_CAP = 1000 / 10;
 
-  setScale(scale) {
-    if (!this.destroyed) {
-      this.display.scale.set(scale, scale);
-    }
+class DemoDrone {
+  constructor() {
+    this.active = false;
+    this.x = 0;
+    this.y = 0;
+    this.width = 0;
+    this.height = 0;
+    this.speed = 0;
+    this.wait = 0;
+    this.targets = [];
+    this.currentTargetIndex = 0;
   }
 
   setPosition(x, y) {
-    if (!this.destroyed) {
-      this.display.position.set(x, y);
-    }
+    this.x = x;
+    this.y = y;
   }
 
-  show(onComplete = null) {
-    if (!this.destroyed) {
-      this.popper.show(onComplete);
-    }
+  setTargets(targets) {
+    this.targets = targets;
+    shuffleArray(this.targets);
+    this.currentTargetIndex = 0;
   }
 
-  hide(onComplete = null) {
-    if (!this.destroyed) {
-      this.popper.hide(onComplete);
+  onReachedTarget() {
+    this.currentTargetIndex = (this.currentTargetIndex + 1) % this.targets.length;
+    this.speed = 0;
+    this.wait = 1000;
+  }
+
+  animate(time) {
+    if (this.active === false || this.targets.length === 0) {
+      return;
+    }
+
+    const deltaMS = Math.min(time / PIXI.settings.TARGET_FPMS, SPEED_CAP);
+    if (this.wait > 0) {
+      this.wait = Math.max(0, this.wait - deltaMS);
+    }
+
+    if (this.wait === 0) {
+      const target = this.targets[this.currentTargetIndex];
+      const dx = target.x - this.x;
+      const dy = target.y - this.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance > DemoDrone.MIN_SPEED * deltaMS) {
+        const targetSpeed = Math.max(
+          DemoDrone.MIN_SPEED,
+          DemoDrone.MAX_SPEED * Math.min(1, distance / 400)
+        );
+        this.speed += Math.sign(targetSpeed - this.speed) * 0.01;
+        this.x += (dx / distance) * this.speed * deltaMS;
+        this.y += (dy / distance) * this.speed * deltaMS;
+      } else {
+        this.onReachedTarget();
+      }
     }
   }
 }
 
-module.exports = MapMarker;
+DemoDrone.WAIT_TIME = 5000; // in ms
+DemoDrone.MIN_SPEED = 0.1;
+DemoDrone.MAX_SPEED = 0.5; // in pixels per ms
+
+module.exports = DemoDrone;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/view-pixi/drone.js":
+/*!***************************************!*\
+  !*** ./src/js/lib/view-pixi/drone.js ***!
+  \***************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+/* globals PIXI */
+const EventEmitter = __webpack_require__(/*! events */ "./node_modules/events/events.js");
+
+const SPEED_CAP = 1000 / 10;
+
+class Drone {
+  constructor(options, x = 0, y = 0) {
+    this.options = { ...Drone.defaultOptions, ...options };
+    this.x = x;
+    this.y = y;
+    this.width = 0;
+    this.height = 0;
+    this.speed = 0;
+    this.pauseCounter = 0;
+    this.targets = [];
+    this.currentTargetIndex = 0;
+    this.reachedAllTargets = true;
+    this.events = new EventEmitter();
+  }
+
+  setPosition(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  setTargets(targets) {
+    this.targets = targets;
+    this.currentTargetIndex = 0;
+    this.reachedAllTargets = false;
+  }
+
+  onReachedTarget() {
+    this.events.emit('reachedTarget', this.currentTargetIndex);
+    this.speed = 0;
+    this.currentTargetIndex += 1;
+    if (this.currentTargetIndex === this.targets.length) {
+      this.reachedAllTargets = true;
+      this.events.emit('reachedAllTargets');
+    } else {
+      this.pauseCounter = this.options.pauseBetweenTargets;
+    }
+  }
+
+  stop() {
+    this.speed = 0;
+    this.pauseCounter = 0;
+    this.targets = [];
+    this.reachedAllTargets = true;
+  }
+
+  animate(time) {
+    if (this.reachedAllTargets === true || this.targets.length === 0) {
+      return;
+    }
+
+    const deltaMS = Math.min(time / PIXI.settings.TARGET_FPMS, SPEED_CAP);
+    if (this.pauseCounter > 0) {
+      this.pauseCounter = Math.max(0, this.pauseCounter - deltaMS);
+    }
+
+    if (this.pauseCounter === 0) {
+      const target = this.targets[this.currentTargetIndex];
+      const dx = target.x - this.x;
+      const dy = target.y - this.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance > this.options.minSpeed * deltaMS) {
+        const targetSpeed = Math.max(
+          this.options.minSpeed,
+          this.options.maxSpeed * Math.min(1, distance / this.options.slowDownDistance)
+        );
+        this.speed += (Math.sign(targetSpeed - this.speed)
+          * this.options.accelerationFactor * deltaMS);
+        this.x += (dx / distance) * this.speed * deltaMS;
+        this.y += (dy / distance) * this.speed * deltaMS;
+      } else {
+        this.onReachedTarget();
+      }
+    }
+  }
+}
+
+Drone.defaultOptions = {
+  pauseBetweenTargets: 1000,
+  minSpeed: 0.1,
+  maxSpeed: 0.5,
+  accelerationFactor: 0.01,
+  slowDownDistance: 400,
+};
+
+module.exports = Drone;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/view-pixi/game-view-camera.js":
+/*!**************************************************!*\
+  !*** ./src/js/lib/view-pixi/game-view-camera.js ***!
+  \**************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+/* globals PIXI */
+
+const PixiTween = __webpack_require__(/*! ../helpers-pixi/tween */ "./src/js/lib/helpers-pixi/tween.js");
+
+/**
+ * A camera offers a viewport that crops, pans and zooms across a child display object.
+ */
+class GameViewCamera {
+  /**
+   * @param {PIXI.DisplayObject} child
+   *  The display object to be cropped, panned and zoomed.
+   * @param {Number} viewportWidth
+   *  The width of the viewport (the view that the camera offers).
+   * @param {Number} viewportHeight
+   *  The height of the viewport (the view that the camera offers).
+   */
+  constructor(child, viewportWidth, viewportHeight) {
+    this.child = child;
+    this.viewportWidth = viewportWidth;
+    this.viewportHeight = viewportHeight;
+
+    this.display = new PIXI.Container();
+    this.display.addChild(this.child);
+    this.target = null;
+    this.offset = new PIXI.Point(0, 0);
+    this.zoom = 1;
+  }
+
+  /**
+   * Set the target of the camera.
+   *
+   * @param {PIXI.DisplayObject} target
+   *  An object within the child that the camera should follow.
+   */
+  setTarget(target) {
+    this.target = target;
+  }
+
+  getTarget() {
+    return this.target;
+  }
+
+  getPosition() {
+    return this.display.position;
+  }
+
+  setRelativeOffset(xFactor, yFactor) {
+    if (this.target.width && this.target.height) {
+      this.offset = new PIXI.Point(this.target.width * xFactor, this.target.height * yFactor);
+    } else {
+      this.offset = new PIXI.Point(0, 0);
+    }
+  }
+
+  relativeOffsetTo(xFactor, yFactor, duration = 500) {
+    if (this.offsetTween) {
+      this.offsetTween.destroy();
+    }
+
+    this.offsetTween = new PixiTween({
+      from: { x: this.offset.x, y: this.offset.y },
+      to: { x: this.target.width * xFactor, y: this.target.height * yFactor },
+      duration,
+      easing: PixiTween.Easing.Sinusoidal.InOut,
+      onUpdate: (o) => {
+        this.offset = new PIXI.Point(o.value.x, o.value.y);
+      },
+    });
+  }
+
+  setZoom(zoom) {
+    this.display.scale.set(zoom);
+  }
+
+  zoomTo(zoom, duration = 500) {
+    if (this.zoomTween) {
+      this.zoomTween.destroy();
+    }
+    this.zoomTween = new PixiTween({
+      from: this.getZoom(),
+      to: zoom,
+      duration,
+      easing: PixiTween.Easing.Sinusoidal.InOut,
+      onUpdate: (o) => {
+        this.setZoom(o.value);
+      },
+    });
+  }
+
+  getZoom() {
+    return this.display.scale.x;
+  }
+
+  /**
+   * Update the camera.
+   *
+   * This should be called every frame. It will update the camera's pivot point to follow
+   * the target.
+   */
+  update() {
+    // eslint-disable-next-line no-underscore-dangle
+    if (this.target && !this.target._destroyed) {
+      // Set the pivot but maintain the camera within the bounds of the view
+      this.display.pivot.set(
+        Math.max(
+          0,
+          Math.min(
+            this.target.x + this.offset.x - this.viewportWidth / 2 / this.display.scale.x,
+            this.child.width - this.viewportWidth / this.display.scale.x
+          )
+        ),
+        Math.max(
+          0,
+          Math.min(
+            this.target.y + this.offset.y - this.viewportHeight / 2 / this.display.scale.y,
+            this.child.height - this.viewportHeight / this.display.scale.y
+          )
+        )
+      );
+    }
+  }
+}
+
+module.exports = GameViewCamera;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/view-pixi/game-view.js":
+/*!*******************************************!*\
+  !*** ./src/js/lib/view-pixi/game-view.js ***!
+  \*******************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const CharacterView = __webpack_require__(/*! ./character-view */ "./src/js/lib/view-pixi/character-view.js");
+const PCView = __webpack_require__(/*! ./pc-view */ "./src/js/lib/view-pixi/pc-view.js");
+const GuideArrow = __webpack_require__(/*! ./guide-arrow */ "./src/js/lib/view-pixi/guide-arrow.js");
+const TargetArrow = __webpack_require__(/*! ./target-arrow */ "./src/js/lib/view-pixi/target-arrow.js");
+const TownView = __webpack_require__(/*! ./town-view */ "./src/js/lib/view-pixi/town-view.js");
+const GameViewCamera = __webpack_require__(/*! ./game-view-camera */ "./src/js/lib/view-pixi/game-view-camera.js");
+const DemoDrone = __webpack_require__(/*! ./demo-drone */ "./src/js/lib/view-pixi/demo-drone.js");
+const SceneryView = __webpack_require__(/*! ./scenery-view */ "./src/js/lib/view-pixi/scenery-view.js");
+const Drone = __webpack_require__(/*! ./drone */ "./src/js/lib/view-pixi/drone.js");
+
+class GameView {
+  constructor(config, textures, pixiApp, width, height) {
+    this.config = config;
+    this.textures = textures;
+    this.pixiApp = pixiApp;
+
+    this.townView = new TownView(this.config, this.textures);
+    this.camera = new GameViewCamera(this.townView.display, width, height);
+    this.cameraPreset = null;
+    this.demoDrone = new DemoDrone();
+    this.demoDrone.setPosition(this.townView.width / 2, this.townView.height / 2);
+    this.drones = [];
+
+    this.sceneryViews = {};
+    this.npcViews = {};
+    this.remotePcViews = {};
+    this.pcView = null;
+    this.guideArrow = null;
+    this.targetArrow = null;
+    this.targetArrowTarget = null;
+    this.showHitbox = false;
+  }
+
+  getDisplay() {
+    return this.camera.display;
+  }
+
+  isOnScreen(displayObject) {
+    // Return true if the displayObject is within the PIXI viewport
+    const bounds = displayObject.getBounds();
+    return bounds.x + bounds.width >= 0
+      && bounds.x <= this.pixiApp.renderer.width
+      && bounds.y + bounds.height >= 0
+      && bounds.y <= this.pixiApp.renderer.height;
+  }
+
+  addScenery(scenery) {
+    const view = new SceneryView(this.config, this.textures, scenery, this.townView);
+    if (scenery.cond) {
+      view.hide(false);
+    }
+    this.townView.addView(view.display, scenery.layer);
+    this.sceneryViews[scenery.id] = view;
+  }
+
+  removeScenery(id) {
+    const view = this.sceneryViews[id];
+    if (view) {
+      delete this.sceneryViews[id];
+      view.destroy();
+    }
+  }
+
+  removeAllScenery() {
+    Object.keys(this.sceneryViews).forEach((id) => {
+      this.removeScenery(id);
+    });
+  }
+
+  getSceneryView(id) {
+    return this.sceneryViews[id];
+  }
+
+  sortScenery() {
+    // Sort layers where scenery can go. The main layer is sorted in the main loop.
+    this.townView.sortViews('back');
+    this.townView.sortViews('front');
+  }
+
+  ensureSceneryHidden(id) {
+    const view = this.sceneryViews[id];
+    if (view && view.isVisible()) {
+      view.hide();
+    }
+  }
+
+  ensureSceneryVisible(id) {
+    const view = this.sceneryViews[id];
+    if (view && !view.isVisible()) {
+      view.show();
+    }
+  }
+
+  addNpc(npc) {
+    const view = new CharacterView(this.config, this.textures, npc, this.townView);
+    if (npc.cond) {
+      view.hide(false);
+    }
+    this.townView.addView(view.display);
+    this.npcViews[npc.id] = view;
+  }
+
+  removeNpc(id) {
+    const view = this.npcViews[id];
+    if (view) {
+      delete this.npcViews[id];
+      view.destroy();
+    }
+  }
+
+  removeAllNpcs() {
+    Object.keys(this.npcViews).forEach((id) => {
+      this.removeNpc(id);
+    });
+  }
+
+  getNpcViewsInRect(rect) {
+    return Object.values(this.npcViews)
+      .filter((npc) => npc.inRect(rect));
+  }
+
+  getAllNpcViews() {
+    return Object.values(this.npcViews);
+  }
+
+  getNpcView(id) {
+    return this.npcViews[id];
+  }
+
+  ensureNpcHidden(id) {
+    const view = this.npcViews[id];
+    if (view && view.isVisible()) {
+      view.hide();
+    }
+  }
+
+  ensureNpcVisible(id) {
+    const view = this.npcViews[id];
+    if (view && !view.isVisible()) {
+      view.show();
+    }
+  }
+
+  addRemotePcView(pc) {
+    const view = new PCView(this.config, this.textures, pc, this.townView);
+    this.townView.addView(view.display);
+    this.remotePcViews[pc.id] = view;
+  }
+
+  removeRemotePcView(id) {
+    const view = this.remotePcViews[id];
+    if (view) {
+      delete this.remotePcViews[id];
+      view.destroy();
+    }
+  }
+
+  addPc(pc) {
+    this.pcView = new PCView(this.config, this.textures, pc, this.townView);
+    this.townView.addView(this.pcView.display);
+    this.townView.addView(this.pcView.hitboxDisplay, 'pre-main');
+    this.guideArrow = new GuideArrow(this.pcView);
+  }
+
+  removePc() {
+    if (this.guideArrow) {
+      this.guideArrow.destroy();
+      this.guideArrow = null;
+    }
+    if (this.pcView) {
+      this.pcView.destroy();
+      this.pcView = null;
+    }
+  }
+
+  getPcView() {
+    return this.pcView;
+  }
+
+  updateGuideArrow() {
+    if (this.guideArrow) {
+      if (this.targetArrow && this.targetArrow.display && this.targetArrow.display.parent
+        && this.targetArrow.visible
+        && !this.isOnScreen(this.targetArrow.display)) {
+        const targetArrow = {
+          x: this.targetArrow.display.x + this.targetArrow.display.parent.x,
+          y: this.targetArrow.display.y + this.targetArrow.display.parent.y,
+        };
+        const deltaX = targetArrow.x - this.pcView.display.x;
+        const deltaY = targetArrow.y - this.pcView.display.y;
+        const threshold = this.pcView.display.height;
+        this.guideArrow.pointInDirection(
+          Math.abs(deltaX) > threshold ? Math.sign(deltaX) : 0,
+          Math.abs(deltaY) > threshold ? Math.sign(deltaY) : 0
+        );
+        this.guideArrow.show();
+      } else {
+        this.guideArrow.hide();
+      }
+    }
+  }
+
+  updateTargetArrow(target) {
+    if (this.targetArrowTarget === target) {
+      return;
+    }
+    if (this.targetArrow !== null) {
+      this.targetArrow.destroy();
+      this.targetArrow = null;
+    }
+    this.targetArrowTarget = target;
+    if (target) {
+      const targetNpc = this.getNpcView(target);
+      if (targetNpc) {
+        this.targetArrow = new TargetArrow(targetNpc);
+      }
+    }
+  }
+
+  hideDistractions() {
+    this.targetArrow?.hide();
+  }
+
+  showDistractions() {
+    this.targetArrow?.show();
+  }
+
+  createDrone(options, x, y) {
+    const newDrone = new Drone(options, x, y);
+    this.drones.push(newDrone);
+    return newDrone;
+  }
+
+  destroyDrone(drone) {
+    const index = this.drones.indexOf(drone);
+    if (index !== -1) {
+      this.drones.splice(index, 1);
+    }
+  }
+
+  cameraStop() {
+    this.camera.setTarget(null);
+  }
+
+  cameraFollowPc(instant = true) {
+    if (this.pcView) {
+      this.camera.setTarget(this.pcView.display);
+      this.cameraUsePreset('walking', instant);
+      this.demoDrone.active = false;
+    }
+  }
+
+  cameraFollowDemoDrone(instant = true) {
+    this.camera.setTarget(this.demoDrone);
+    this.cameraUsePreset('drone', instant);
+    this.demoDrone.active = true;
+  }
+
+  cameraUsePreset(presetOrName, instant = false) {
+    const preset = typeof presetOrName === 'string'
+      ? this.config?.game?.cameraPresets?.[presetOrName] || {}
+      : presetOrName;
+    const offsetX = preset?.offset?.x || 0;
+    const offsetY = preset?.offset?.y || -0.8;
+    const zoom = preset?.zoom || 1;
+
+    this.cameraPreset = preset;
+    if (instant) {
+      this.camera.setRelativeOffset(offsetX, offsetY);
+      this.camera.setZoom(zoom);
+    } else {
+      this.camera.relativeOffsetTo(offsetX, offsetY);
+      this.camera.zoomTo(zoom);
+    }
+  }
+
+  resetDroneTargets() {
+    this.demoDrone.setTargets(this.getAllNpcViews()
+      .filter((npcView) => npcView.isVisible())
+      .map((npcView) => ({
+        x: npcView.display.x,
+        y: npcView.display.y - npcView.display.height,
+      })));
+  }
+
+  toggleHitboxDisplay() {
+    this.showHitbox = !this.showHitbox;
+  }
+
+  toggleSceneryTransparency() {
+    Object.entries(this.sceneryViews).forEach(([, sceneryView]) => {
+      sceneryView.display.alpha = sceneryView.display.alpha === 1 ? 0.5 : 1;
+    });
+  }
+
+  handlePcAction() {
+    if (this.showHitbox) {
+      this.pcView.showActionHitbox();
+    }
+  }
+
+  animate(time) {
+    Object.values(this.remotePcViews).forEach((pcView) => {
+      pcView.display.position = pcView.character.position;
+      pcView.display.zIndex = pcView.character.position.y;
+      pcView.animate(time);
+    });
+
+    if (this.pcView) {
+      this.pcView.animate(time);
+    }
+
+    this.townView.sortViews('main');
+    this.demoDrone.animate(time);
+    this.drones.forEach((drone) => drone.animate(time));
+    this.camera.update();
+    this.updateGuideArrow();
+  }
+}
+
+module.exports = GameView;
+
+
+/***/ }),
+
+/***/ "./src/js/lib/view-pixi/guide-arrow.js":
+/*!*********************************************!*\
+  !*** ./src/js/lib/view-pixi/guide-arrow.js ***!
+  \*********************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+/* global PIXI */
+const PixiTween = __webpack_require__(/*! ../helpers-pixi/tween */ "./src/js/lib/helpers-pixi/tween.js");
+
+class GuideArrow {
+  constructor(pcView) {
+    this.pcView = pcView;
+    this.display = this.createSprite();
+    this.pcView.display.addChild(this.display);
+    this.visible = false;
+    this.active = false;
+    this.direction = { x: 0, y: 0 };
+    this.tween = PixiTween.Pulse(this.display);
+  }
+
+  createSprite() {
+    const sprite = new PIXI.Sprite(this.pcView.textures['guide-arrow']);
+    sprite.anchor.set(0, 0.5);
+    sprite.visible = false;
+
+    return sprite;
+  }
+
+  destroy() {
+    this.tween.destroy();
+    this.display.removeFromParent();
+    this.display.destroy();
+    this.display = null;
+  }
+
+  show() {
+    this.visible = true;
+    this.updateVisibility();
+  }
+
+  hide() {
+    this.visible = false;
+    this.updateVisibility();
+  }
+
+  updateVisibility() {
+    this.display.visible = this.active && this.visible;
+  }
+
+  /**
+   * Show an arrow around the character in the specified direction
+   *
+   * @param {number} x
+   *  -1, 0 or 1 for left, neutral or right
+   * @param {number} y
+   *  -1, 0 or 1 for top, neutral or bottom
+   */
+  pointInDirection(x, y) {
+    if (x === this.direction.x && y === this.direction.y) {
+      return;
+    }
+    this.direction = { x, y };
+    if (this.direction.x === 0 && this.direction.y === 0) {
+      this.active = false;
+      this.updateVisibility();
+      return;
+    }
+
+    this.updateVisibility();
+    this.active = true;
+    // By default, the sprite points to the right (x = 1, y = 0)
+    this.display.rotation = Math.atan2(this.direction.y, this.direction.x);
+    this.display.position = this.getArrowPosition();
+
+    // if (this.tween) {
+    //   this.tween.destroy();
+    //   const position = this.getArrowPosition();
+    //   this.tween = PixiTween.Yoyo(this.display, position, 1, 1.2);
+    // }
+  }
+
+  getArrowPosition() {
+    return {
+      x: (this.pcView.display.width * 0.75) * this.direction.x,
+      y: -this.pcView.display.height / 2 + (this.pcView.display.height * 0.6) * this.direction.y,
+    };
+  }
+}
+
+module.exports = GuideArrow;
 
 
 /***/ }),
@@ -43868,6 +48875,89 @@ module.exports = SceneryView;
 
 /***/ }),
 
+/***/ "./src/js/lib/view-pixi/target-arrow.js":
+/*!**********************************************!*\
+  !*** ./src/js/lib/view-pixi/target-arrow.js ***!
+  \**********************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+/* global PIXI */
+const Fader = __webpack_require__(/*! ../helpers-pixi/fader */ "./src/js/lib/helpers-pixi/fader.js");
+const PixiTween = __webpack_require__(/*! ../helpers-pixi/tween */ "./src/js/lib/helpers-pixi/tween.js");
+
+class TargetArrow {
+  constructor(characterView) {
+    this.characterView = characterView;
+    this.display = this.createSprite();
+    this.characterView.display.addChild(this.display);
+
+    this.visible = false;
+    this.fader = new Fader(this.display);
+
+    const [from, to] = this.getArrowCoords();
+    this.tween = PixiTween.Yoyo(
+      this.display,
+      { x: 0, y: 1 },
+      from,
+      to
+    );
+
+    this.show();
+  }
+
+  createSprite() {
+    const sprite = new PIXI.Sprite(this.characterView.textures['target-arrow']);
+    sprite.anchor.set(0.5, 1);
+    sprite.position.set(
+      0,
+      -this.characterView.display.height
+    );
+    sprite.visible = false;
+    sprite.alpha = 0;
+
+    return sprite;
+  }
+
+  destroy() {
+    this.fader.fadeOut(200, () => {
+      this.fader.destroy();
+      this.tween.destroy();
+      this.display.removeFromParent();
+      this.display.destroy();
+      this.display = null;
+    });
+  }
+
+  hide() {
+    this.visible = false;
+    this.fader.fadeOut(200);
+  }
+
+  show() {
+    this.visible = true;
+    this.fader.fadeIn(200);
+  }
+
+  getArrowCoords() {
+    if (this.characterView.hasMoodBalloon()) {
+      return [
+        -this.characterView.display.height * 1.2,
+        -this.characterView.display.height * 1.35,
+      ];
+    }
+
+    return [
+      -this.characterView.display.height,
+      -this.characterView.display.height * 1.15,
+    ];
+  }
+}
+
+module.exports = TargetArrow;
+
+
+/***/ }),
+
 /***/ "./src/js/lib/view-pixi/town-view.js":
 /*!*******************************************!*\
   !*** ./src/js/lib/view-pixi/town-view.js ***!
@@ -44109,22 +49199,25 @@ module.exports = JSON.parse('{"$id":"https://github.com/IMAGINARY/citizen-quest/
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-/*!***********************!*\
-  !*** ./src/js/map.js ***!
-  \***********************/
+/*!**************************!*\
+  !*** ./src/js/player.js ***!
+  \**************************/
 const ServerSocketConnector = __webpack_require__(/*! ./lib/net/server-socket-connector */ "./src/js/lib/net/server-socket-connector.js");
 const ConnectionStateView = __webpack_require__(/*! ./lib/net/connection-state-view */ "./src/js/lib/net/connection-state-view.js");
 const showFatalError = __webpack_require__(/*! ./lib/helpers-web/show-fatal-error */ "./src/js/lib/helpers-web/show-fatal-error.js");
 __webpack_require__(/*! ../sass/default.scss */ "./src/sass/default.scss");
-const fetchConfig = __webpack_require__(/*! ./lib/helpers-client/fetch-config */ "./src/js/lib/helpers-client/fetch-config.js");
-const fetchTextures = __webpack_require__(/*! ./lib/helpers-client/fetch-textures */ "./src/js/lib/helpers-client/fetch-textures.js");
 const { getApiServerUrl, getSocketServerUrl } = __webpack_require__(/*! ./lib/net/server-url */ "./src/js/lib/net/server-url.js");
 const { initSentry } = __webpack_require__(/*! ./lib/helpers/sentry */ "./src/js/lib/helpers/sentry.js");
-const MapApp = __webpack_require__(/*! ./lib/app/map-app */ "./src/js/lib/app/map-app.js");
+const PlayerApp = __webpack_require__(/*! ./lib/app/player-app */ "./src/js/lib/app/player-app.js");
+const GameServerController = __webpack_require__(/*! ./lib/app/game-server-controller */ "./src/js/lib/app/game-server-controller.js");
+const fetchConfig = __webpack_require__(/*! ./lib/helpers-client/fetch-config */ "./src/js/lib/helpers-client/fetch-config.js");
+const fetchTextures = __webpack_require__(/*! ./lib/helpers-client/fetch-textures */ "./src/js/lib/helpers-client/fetch-textures.js");
+const PlayerAppStates = __webpack_require__(/*! ./lib/app/player-app-states/states */ "./src/js/lib/app/player-app-states/states.js");
 const { configureLogger } = __webpack_require__(/*! ./lib/helpers/configure-logger */ "./src/js/lib/helpers/configure-logger.js");
 
 (async () => {
   const urlParams = new URLSearchParams(window.location.search);
+  const playerId = urlParams.get('p') || '1';
   const statsPanel = urlParams.get('s') || null;
   const configUrl = `${getApiServerUrl()}config`;
   const logLevel = urlParams.get('log') || 'warn';
@@ -44144,85 +49237,29 @@ const { configureLogger } = __webpack_require__(/*! ./lib/helpers/configure-logg
       sentryInitialized = true;
     }
     const textures = await fetchTextures('./static/textures', config.textures, 'town-view');
+    const playerApp = new PlayerApp(config, textures, playerId);
 
-    const mapApp = new MapApp(config, textures);
-    let round = 0;
+    $('[data-component="PlayerApp"]').replaceWith(playerApp.$element);
+    playerApp.refresh();
 
-    $('[data-component="MapApp"]').replaceWith(mapApp.$element);
-    mapApp.resize();
-    $(window).on('resize', () => {
-      mapApp.resize();
-    });
-
-    let syncReceived = false;
-    const connector = new ServerSocketConnector(config, getSocketServerUrl(), 'map');
+    const connector = new ServerSocketConnector(config, getSocketServerUrl(), `player-${playerId}`);
     const connStateView = new ConnectionStateView(connector);
     $('body').append(connStateView.$element);
+    connector.events.on('sync', () => {
+      playerApp.stats.ping();
+    });
 
-    connector.events.on('connect', () => {
-      syncReceived = true;
-    });
-    connector.events.on('sync', (message) => {
-      syncReceived = true;
-      mapApp.stats.ping();
-      // If a new round started
-      if (message.round && message.storyline
-        && (round !== message.round || mapApp.storylineId !== message.storyline)) {
-        round = message.round;
-        mapApp.setStoryline(message.storyline);
-      }
-      // Move the players
-      Object.entries(message.players).forEach(([id, player]) => {
-        if (mapApp.pcs[id] === undefined) {
-          mapApp.addPc(id);
-        }
-        if (player.position) {
-          mapApp.pcs[id].setPosition(player.position.x, player.position.y);
-        }
-        if (player.speed) {
-          mapApp.pcs[id].setSpeed(player.speed.x, player.speed.y);
-        }
-      });
-      // Remove players that were not included in the sync
-      Object.keys(mapApp.pcs).forEach((id) => {
-        if (message.players[id] === undefined) {
-          mapApp.removePc(id);
-        }
-      });
-      if (message.flags) {
-        let flagsChanged = false;
-        const setFlags = new Set(Object.keys(message.flags));
-        // Clear all the flags from mapApp.flags not present in setFlags
-        Object.keys(mapApp.flags.flags).forEach((flag) => {
-          if (!setFlags.has(flag) && mapApp.flags.value(flag) !== 0) {
-            mapApp.flags.set(flag, 0);
-            logger.info(`Clearing flag ${flag}`);
-            flagsChanged = true;
-          }
-        });
-        // Add all the flags from message.flags not present in mapApp.flags.flags
-        Object.keys(message.flags).forEach((flag) => {
-          if (!mapApp.flags.exists(flag)) {
-            mapApp.flags.set(flag, message.flags[flag]);
-            logger.info(`Adding flag ${flag} with value ${message.flags[flag]}`);
-            flagsChanged = true;
-          }
-        });
-        if (flagsChanged) {
-          mapApp.updateQuestMarkers();
-          mapApp.updateNpcs();
-        }
-      }
-    });
-    mapApp.pixiApp.ticker.add(() => {
-      if (syncReceived) {
-        connector.sync();
-        syncReceived = false;
-      }
-    });
+    playerApp.setGameServerController(new GameServerController(playerApp, connector));
+    playerApp.setState(PlayerAppStates.RESET);
 
     if (statsPanel) {
-      mapApp.stats.showPanel(statsPanel);
+      playerApp.stats.showPanel(statsPanel);
+    }
+
+    if (window.CQ === undefined) {
+      window.CQ = {
+        playerApp,
+      };
     }
   } catch (err) {
     showFatalError(err.message, err);
@@ -44234,4 +49271,4 @@ const { configureLogger } = __webpack_require__(/*! ./lib/helpers/configure-logg
 
 /******/ })()
 ;
-//# sourceMappingURL=map.997d0f99b70df1f6097a.js.map
+//# sourceMappingURL=player.b5cf4eda4c5471051fd7.js.map

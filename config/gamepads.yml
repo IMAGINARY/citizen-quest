@@ -1,5 +1,13 @@
 players:
   # <id>: // A unique id (integer) for the player
+  #   gamepad: <integer|string> // (optional) Which gamepad this player uses.
+  #     - Omitted / null: the first connected gamepad (default).
+  #     - Integer: the gamepad whose Gamepad.index equals this value.
+  #     - String: the gamepad whose Gamepad.id equals this value exactly
+  #       (quote it in YAML). Ids differ between browsers; the client logs
+  #       "Using gamepad <index>: <id>" when it connects to one.
+  #     Identical devices share the same id, so use the index to tell them apart.
+  #     If no gamepad matches, a warning is logged and no gamepad is used.
   #   gamepadMapping: // The mapping of the gamepad
   #     axes: // The mapping of the axes (negative index means the axis is inverted; -0 does not work, use -0.0 instead)
   #       horizontal: <integer> // The axis index of the horizontal axis
