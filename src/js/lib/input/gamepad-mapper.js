@@ -1,6 +1,21 @@
 const InputMgr = require('./input-mgr');
 
 /**
+ * @typedef {object} GamepadMapperAxesConfig
+ * @property {number} horizontal Index of the horizontal axis.
+ * @property {number} vertical Index of the vertical axis.
+ * @property {boolean} invertHorizontal Whether to invert the horizontal axis.
+ * @property {boolean} invertVertical Whether to invert the vertical axis.
+ */
+
+/**
+ * @typedef {object} GamepadMapperConfig
+ * @property {GamepadMapperAxesConfig} [axes] Axes mapping.
+ * @property {Object<string, number>} [buttons]
+ *  Maps event names (see {@link InputMgr.eventNames}) to button indexes.
+ */
+
+/**
  * Maps gamepad and joystick input to events.
  *
  * Different gamepads and joysticks have different mappings of buttons and axes.

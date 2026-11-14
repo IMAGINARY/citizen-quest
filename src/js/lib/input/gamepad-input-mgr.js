@@ -4,18 +4,7 @@ const InputMgr = require('./input-mgr');
 const GamepadMapper = require('./gamepad-mapper');
 
 /**
- * @typedef {
- *  horizontal: number,
- *  vertical: number,
- *  invertHorizontal: boolean,
- *  invertVertical: boolean
-*  } GamepadMapperAxesConfig
- */
-
-/**
- * @typedef {
- *  {axes?:GamepadMapperAxesConfig,buttons?:{InputMgrEventNames:number}}
- * } GamepadMapperConfig
+ * @typedef {import('./gamepad-mapper').GamepadMapperConfig} GamepadMapperConfig
  */
 
 /**
@@ -81,20 +70,29 @@ class GamepadInputMgr extends InputMgr {
       logger.warn(`Invalid gamepad selector ${JSON.stringify(this.gamepadSelector)}. It must be an integer (index) or a string (id).`);
     }
     this.gamepadIndex = -1;
-    this.handleGamepadDisConnected = () => {
-      const gamepad = this.findConfiguredGamepad();
-      if (typeof gamepad !== 'undefined') {
-        logger.info(`Using gamepad ${gamepad.index}: ${gamepad.id}`);
-        this.gamepadIndex = gamepad.index;
+    // Stable reference so the same listener can be added and removed.
+    this.handleGamepadConnectionChange = () => this.selectGamepad();
+  }
+
+  /**
+   * Picks which connected gamepad to use, based on the configured selector.
+   *
+   * Called when listeners are attached and whenever a gamepad connects or
+   * disconnects.
+   */
+  selectGamepad() {
+    const gamepad = this.findConfiguredGamepad();
+    if (typeof gamepad !== 'undefined') {
+      logger.info(`Using gamepad ${gamepad.index}: ${gamepad.id}`);
+      this.gamepadIndex = gamepad.index;
+    } else {
+      if (this.gamepadSelector === null) {
+        logger.info('No gamepad connected');
       } else {
-        if (this.gamepadSelector === null) {
-          logger.info('No gamepad connected');
-        } else {
-          logger.info(`Configured gamepad ${JSON.stringify(this.gamepadSelector)} not found`);
-        }
-        this.gamepadIndex = -1;
+        logger.info(`Configured gamepad ${JSON.stringify(this.gamepadSelector)} not found`);
       }
-    };
+      this.gamepadIndex = -1;
+    }
   }
 
   /**
@@ -121,15 +119,12 @@ class GamepadInputMgr extends InputMgr {
   attachListeners() {
     if (this.isListening()) return;
 
-    // Connect to the first of the already connected gamepads, if any.
-    this.handleGamepadDisConnected();
+    // Pick from the already connected gamepads, if any.
+    this.selectGamepad();
 
     // Attach listeners to handle future connects and disconnects.
-    window.addEventListener('gamepadconnected', this.handleGamepadDisConnected);
-    window.addEventListener(
-      'gamepaddisconnected',
-      this.handleGamepadDisConnected
-    );
+    window.addEventListener('gamepadconnected', this.handleGamepadConnectionChange);
+    window.addEventListener('gamepaddisconnected', this.handleGamepadConnectionChange);
     super.attachListeners();
     /**
      * TODO: Deal with SecurityError from missing gamepad permission.
@@ -141,10 +136,8 @@ class GamepadInputMgr extends InputMgr {
 
   detachListeners() {
     if (!this.isListening()) return;
-    window.removeEventListener(
-      'gamepaddisconnected',
-      this.handleGamepadDisConnected
-    );
+    window.removeEventListener('gamepadconnected', this.handleGamepadConnectionChange);
+    window.removeEventListener('gamepaddisconnected', this.handleGamepadConnectionChange);
     this.hasListenersAttached = false;
     this.gamepadIndex = -1;
     super.detachListeners();

@@ -19,7 +19,7 @@ const EventEmitter = require('events');
 
 /**
  * Return type of {@link InputMgr#getDirection}.
- * @typedef { x: number, y: number, action: boolean, lang: boolean } InputMgrDirection
+ * @typedef {{x: number, y: number, action: boolean, lang: boolean}} InputMgrDirection
  */
 
 /**

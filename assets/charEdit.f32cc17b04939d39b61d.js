@@ -676,7 +676,7 @@ const EventEmitter = __webpack_require__(/*! events */ "./node_modules/events/ev
 
 /**
  * Return type of {@link InputMgr#getDirection}.
- * @typedef { x: number, y: number, action: boolean, lang: boolean } InputMgrDirection
+ * @typedef {{x: number, y: number, action: boolean, lang: boolean}} InputMgrDirection
  */
 
 /**
@@ -1251,4 +1251,4 @@ const fetchTextures = __webpack_require__(/*! ./lib/helpers-client/fetch-texture
 
 /******/ })()
 ;
-//# sourceMappingURL=charEdit.fbd395f9ac83135e586a.js.map
+//# sourceMappingURL=charEdit.f32cc17b04939d39b61d.js.map

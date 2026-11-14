@@ -41146,7 +41146,7 @@ const EventEmitter = __webpack_require__(/*! events */ "./node_modules/events/ev
 
 /**
  * Return type of {@link InputMgr#getDirection}.
- * @typedef { x: number, y: number, action: boolean, lang: boolean } InputMgrDirection
+ * @typedef {{x: number, y: number, action: boolean, lang: boolean}} InputMgrDirection
  */
 
 /**
@@ -44243,4 +44243,4 @@ const { configureLogger } = __webpack_require__(/*! ./lib/helpers/configure-logg
 
 /******/ })()
 ;
-//# sourceMappingURL=map.665c41054f6180027de3.js.map
+//# sourceMappingURL=map.d4c738fbc92ff02aa319.js.map
