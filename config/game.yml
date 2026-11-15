@@ -7,8 +7,15 @@ game:
   maxActiveQuests: 3
   hintDialogueThreshold: 3
   playerAppWidth: 1024
+#  playerAppWidth: 1365 # Recommended setting for FullHD screens
   playerAppHeight: 768
   playerAppFontRatio: 0.0175
+#  playerAppFontRatio: 0.014 # Recommended setting for 16:9 screens
+  # UI components are rendered in a playerAppUiWidth x playerAppUiHeight overlay,
+  # centered within the playerApp's viewport
+  playerAppUiWidth: 100%
+#  playerAppUiWidth: 90% # Recommended setting for FullHD screens
+  playerAppUiHeight: 100%
   theme: default
   devModeShortcuts: true
   userModeShortcuts: true

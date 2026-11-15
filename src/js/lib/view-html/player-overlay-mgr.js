@@ -31,12 +31,26 @@ class PlayerOverlayManager {
       .addClass('pixi-wrapper')
       .appendTo(this.$element);
 
+    this.$uiOverlay = $('<div></div>')
+      .addClass('ui-overlay')
+      .css({
+        width: this.config?.game?.playerAppUiWidth ?? null,
+        height: this.config?.game?.playerAppUiHeight ?? null,
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        right: 0,
+        left: 0,
+        margin: 'auto',
+      })
+      .appendTo(this.$element);
+
     this.imageDisplayOverlay = new ImageDisplayOverlay(this.config, this.lang);
     this.$element.append(this.imageDisplayOverlay.$element);
 
     this.$storylineBar = $('<div></div>')
       .addClass('storyline-bar')
-      .appendTo(this.$element)
+      .appendTo(this.$uiOverlay)
       .hide();
 
     this.$decisionLabel = $('<div></div>')
@@ -51,17 +65,17 @@ class PlayerOverlayManager {
     this.endingScreen = null;
 
     this.countdown = new Countdown();
-    this.countdown.$element.appendTo(this.$element);
+    this.countdown.$element.appendTo(this.$uiOverlay);
     this.countdown.hide();
 
     this.questOverlay = new QuestOverlay(this.config, this.lang);
-    this.$element.append(this.questOverlay.$element);
+    this.$uiOverlay.append(this.questOverlay.$element);
 
     this.textScreen = new TextScreen(this.config, this.lang);
     this.$element.append(this.textScreen.$element);
 
     this.dialogueOverlay = new DialogueOverlay(this.config, this.lang);
-    this.$element.append(this.dialogueOverlay.$element);
+    this.$uiOverlay.append(this.dialogueOverlay.$element);
 
     if (this.config.game.scoreCounter) {
       const options = this.config.game.scoreCounter;

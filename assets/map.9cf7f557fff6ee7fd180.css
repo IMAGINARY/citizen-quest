@@ -433,7 +433,8 @@ h1, h2, h3, h4, h5, h6 {
   display: block;
   position: absolute;
   width: 50%;
-  height: 32%;
+  height: 0;
+  padding-bottom: 23%;
   top: 10%;
   left: 25%;
   background-image: url(3f2f4a9cc91f28d2739c.svg);
@@ -1132,4 +1133,4 @@ html.with-fatal-error body {
   margin-bottom: 1.2em;
 }
 
-/*# sourceMappingURL=default.fd7ad055bd2e5a721b51.css.map*/
+/*# sourceMappingURL=map.9cf7f557fff6ee7fd180.css.map*/
